@@ -4083,7 +4083,7 @@ body {
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script>
         // --- Standalone Configuration & Shared Logic ---
-        const API_URL = "https://37503xtx-5000.inc1.devtunnels.ms";
+        const API_URL = "";
         
         function logout() {
             localStorage.removeItem('token');
@@ -4487,7 +4487,7 @@ body {
                 // FORECAST: Fetch from existing internal API
                 // -------------------------------------------------------------
                 if (state.context === "forecast") {
-                    const res = await fetch(`${API_URL}/excel/forecast/dashboard`, {
+                    const res = await fetch(`${API_URL}/excel/forecast/dashboard?_t=${Date.now()}`,  {
                         headers: {
                             Authorization: `Bearer ${localStorage.getItem("token")}`,
                         },
@@ -4501,7 +4501,16 @@ body {
 
                     const dbExcel = await res.json();
 
-                    rawData = dbExcel.data;
+                    const now = new Date();
+                    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                    let fyEndYear = now.getMonth() <= 2 ? now.getFullYear() : now.getFullYear() + 1;
+                    const fiscalEndDate = new Date(fyEndYear, 2, 31, 23, 59, 59);
+
+                    rawData = (dbExcel.data || []).filter(item => {
+                        if (!item.dispatchMonth) return false;
+                        const d = new Date(item.dispatchMonth);
+                        return !isNaN(d) && d >= startOfCurrentMonth && d <= fiscalEndDate;
+                    });
                     fiscalYear = dbExcel.fiscalYear || fiscalYear;
                     lastUpdated = dbExcel.lastUpdated || lastUpdated;
                     document.getElementById("excelUpdateTimeDiv").style.display =
@@ -4614,14 +4623,6 @@ body {
                         source = "Bought Out";
                     } else if (colB === "IN HOUSE" || ["UNIT-1", "UNIT-2", "UNIT-3", "ELECTRICAL", "2ND PO", "INHOUSE"].includes(colB)) {
                         source = "In House";
-                    } else {
-                        // Fallback for live devtunnels server until backend is updated
-                        const combined = `${item.project || ""} ${item.assembly || ""} ${item.line || ""}`.toUpperCase();
-                        if (/BOI|STRUCTURE/i.test(combined)) {
-                            source = "Bought Out";
-                        } else if (/UNIT|ELECTR|2ND PO|INHOUSE/i.test(combined)) {
-                            source = "In House";
-                        }
                     }
 
                     return {
@@ -4877,8 +4878,7 @@ body {
                 " Cr";
             document.getElementById("kpi-assemblies").innerText = totalAssm;
 
-            const avg =
-                distMonthCount > 0 ? totalVal / 10000000 / distMonthCount : 0;
+            const avg = totalVal / 10000000 / 12;
             document.getElementById("kpi-avg").innerText =
                 "₹ " +
                 avg.toLocaleString("en-IN", {
