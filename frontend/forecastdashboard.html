@@ -4595,7 +4595,21 @@ body {
                         else if (s.includes("disp")) status = "Dispatched";
                         else if (s.includes("hold")) status = "Hold";
                     }
-                    let source = item.source || "";
+
+                    const rawLine = (
+                        item.line ||
+                        item.manufacturing ||
+                        item.boi_manufacturing ||
+                        item["BOI /MANUFACTURING"] ||
+                        ""
+                    )
+                        .toString()
+                        .replace(/\s+/g, "")
+                        .toUpperCase();
+
+                    let source = "";
+                    if (rawLine.includes("BOI")) source = "BOI";
+                    else if (/UNIT-?[123]/.test(rawLine)) source = "Inhouse";
 
                     return {
                         id: index + 1,
