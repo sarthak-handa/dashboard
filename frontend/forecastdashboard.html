@@ -5127,12 +5127,9 @@ body {
 
             const monthData = groupBy(baseData, "month");
             const monthHighlightSet = new Set(highlightData.map((d) => d.month));
-            // Show months on the X-axis in calendar order (Jan → Dec) instead of
+            // Show months on the X-axis in fiscal order (Apr → Mar) instead of
             // the order they happen to appear in the data.
-            const CALENDAR_ORDER = [
-                "Jan",
-                "Feb",
-                "Mar",
+            const FISCAL_ORDER = [
                 "Apr",
                 "May",
                 "Jun",
@@ -5142,9 +5139,12 @@ body {
                 "Oct",
                 "Nov",
                 "Dec",
+                "Jan",
+                "Feb",
+                "Mar",
             ];
             const labels = Object.keys(monthData).sort(
-                (a, b) => CALENDAR_ORDER.indexOf(a) - CALENDAR_ORDER.indexOf(b),
+                (a, b) => FISCAL_ORDER.indexOf(a) - FISCAL_ORDER.indexOf(b),
             );
 
             charts.line.data.labels = labels;
