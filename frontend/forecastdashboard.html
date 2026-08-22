@@ -3845,8 +3845,8 @@ body {
                     <select id="filter-status" onchange="applySlicer('status', this.value)"
                         class="custom-select bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-md focus:ring-yogi-red focus:border-yogi-red block w-40 p-2">
                         <option value="all">All Statuses</option>
-                        <option value="BOI">BOI</option>
-                        <option value="Inhouse">Inhouse</option>
+                        <option value="Bought Out">Bought Out</option>
+                        <option value="In House">In House</option>
                         <option value="Dispatched">Dispatched</option>
                         <option value="Not Dispatched">Not Dispatched</option>
                     </select>
@@ -4608,8 +4608,21 @@ body {
                         .toUpperCase();
 
                     let source = "";
-                    if (rawLine.includes("BOI")) source = "BOI";
-                    else if (/UNIT-?[123]/.test(rawLine)) source = "Inhouse";
+                    const colB = (item.columnB || item.source || "").trim().toUpperCase();
+
+                    if (colB === "BOUGHT OUT" || ["BOI", "BOI-LL", "STRUCTURE"].includes(colB)) {
+                        source = "Bought Out";
+                    } else if (colB === "IN HOUSE" || ["UNIT-1", "UNIT-2", "UNIT-3", "ELECTRICAL", "2ND PO", "INHOUSE"].includes(colB)) {
+                        source = "In House";
+                    } else {
+                        // Fallback for live devtunnels server until backend is updated
+                        const combined = `${item.project || ""} ${item.assembly || ""} ${item.line || ""}`.toUpperCase();
+                        if (/BOI|STRUCTURE/i.test(combined)) {
+                            source = "Bought Out";
+                        } else if (/UNIT|ELECTR|2ND PO|INHOUSE/i.test(combined)) {
+                            source = "In House";
+                        }
+                    }
 
                     return {
                         id: index + 1,
@@ -4777,7 +4790,7 @@ body {
 
                     if (["Dispatched", "Not Dispatched", "Hold"].includes(filterVal)) {
                         if (row.status !== filterVal) return false;
-                    } else if (["BOI", "Inhouse"].includes(filterVal)) {
+                    } else if (["Bought Out", "In House"].includes(filterVal)) {
                         if (row.source !== filterVal) return false;
                     }
                 }
