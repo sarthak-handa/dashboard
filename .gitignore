@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Dev server (not needed in production)
+dev-server.js
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+*.swp
+*.swo
+*~
