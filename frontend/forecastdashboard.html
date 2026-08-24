@@ -3868,6 +3868,15 @@ body {
                     </select>
                 </div>
 
+                <div class="flex flex-col" id="view-mode-container">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">View Mode</label>
+                    <select id="lineChartViewMode" onchange="toggleViewMode(this.value)"
+                        class="custom-select bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-md focus:ring-yogi-red focus:border-yogi-red block w-40 p-2">
+                        <option value="monthly">Monthly View</option>
+                        <option value="quarterly">Quarterly View</option>
+                    </select>
+                </div>
+                
                 <div class="flex flex-col relative">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Dispatch
                         Month</label>
@@ -4134,6 +4143,7 @@ body {
 
         let state = {
             context: "forecast",
+            viewMode: "monthly",
             searchQuery: "", // Added search state
             filters: { month: [], status: null },
             selection: { pm: null, product: null, month: null },
@@ -4864,6 +4874,11 @@ body {
             updateDashboard();
         }
 
+        function toggleViewMode(mode) {
+            state.viewMode = mode;
+            updateDashboard();
+        }
+
         function applyChartFilter(type, value) {
             state.selection[type] = state.selection[type] === value ? null : value;
             updateDashboard();
@@ -5056,8 +5071,13 @@ body {
                     "#B02A37",
                     "#2E4F6E",
                     "#8C1D2D",
+                    "#E2A03F",
                     "#6C757D",
                     "#ADB5BD",
+                    "#D4A373",
+                    "#4A7C59",
+                    "#C85A3D",
+                    "#7B6888",
                     "#E5E0DA",
                 ],
             };
@@ -5097,20 +5117,26 @@ body {
                 const prodHighlightSet = new Set(highlightData.map((d) => d.product));
 
                 charts.pie.options.cutout = "60%";
-                charts.pie.options.layout.padding = 30;
+                charts.pie.options.layout.padding = 40;
                 charts.pie.options.plugins.legend = {
                     display: true,
                     position: "right",
-                    labels: { boxWidth: 12, font: { size: 10 }, padding: 10 },
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: "circle",
+                        font: { size: 12, weight: "bold", family: "'Inter', sans-serif" },
+                        color: "#4B5563",
+                        padding: 15
+                    },
                 };
                 charts.pie.options.plugins.datalabels = {
-                    display: true,
-                    color: "#333",
+                    display: 'auto',
+                    color: "#4B5563",
                     anchor: "end",
                     align: "end",
-                    offset: 4,
-                    font: { weight: "bold", size: 10 },
-                    formatter: (val) => (val / 10000000).toFixed(2),
+                    offset: 8,
+                    font: { weight: "bold", size: 10, family: "'Inter', sans-serif" },
+                    formatter: (val) => (val / 10000000).toFixed(2)
                 };
 
                 charts.pie.data.labels = Object.keys(prodData);
@@ -5167,40 +5193,64 @@ body {
             }
             charts.pie.update();
 
-            const monthData = groupBy(baseData, "month");
-            const monthHighlightSet = new Set(highlightData.map((d) => d.month));
-            // Show months on the X-axis in fiscal order (Apr → Mar) instead of
-            // the order they happen to appear in the data.
-            const FISCAL_ORDER = [
-                "Apr",
-                "May",
-                "Jun",
-                "Jul",
-                "Aug",
-                "Sep",
-                "Oct",
-                "Nov",
-                "Dec",
-                "Jan",
-                "Feb",
-                "Mar",
-            ];
-            const labels = Object.keys(monthData).sort(
-                (a, b) => FISCAL_ORDER.indexOf(a) - FISCAL_ORDER.indexOf(b),
-            );
+            let labels = [];
+            let dataVals = [];
+            let pointBgColors = [];
+            
+            if (state.viewMode === "quarterly") {
+                const getQuarter = (month) => {
+                    if (["Apr", "May", "Jun"].includes(month)) return "Q1";
+                    if (["Jul", "Aug", "Sep"].includes(month)) return "Q2";
+                    if (["Oct", "Nov", "Dec"].includes(month)) return "Q3";
+                    if (["Jan", "Feb", "Mar"].includes(month)) return "Q4";
+                    return "Other";
+                };
+                
+                const quarterData = {};
+                const quarterHighlightSet = new Set();
+                
+                baseData.forEach(d => {
+                    const q = getQuarter(d.month);
+                    quarterData[q] = (quarterData[q] || 0) + d.val;
+                });
+                highlightData.forEach(d => {
+                    quarterHighlightSet.add(getQuarter(d.month));
+                });
+                
+                const QUARTER_ORDER = ["Q1", "Q2", "Q3", "Q4"];
+                labels = Object.keys(quarterData).sort(
+                    (a, b) => QUARTER_ORDER.indexOf(a) - QUARTER_ORDER.indexOf(b)
+                );
+                dataVals = labels.map(q => (quarterData[q] / 10000000).toFixed(2));
+                pointBgColors = labels.map(q => 
+                    !hasSelection || quarterHighlightSet.has(q) ? colors.red : "#fff"
+                );
+            } else {
+                const monthData = groupBy(baseData, "month");
+                const monthHighlightSet = new Set(highlightData.map((d) => d.month));
+                const FISCAL_ORDER = [
+                    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+                    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"
+                ];
+                labels = Object.keys(monthData).sort(
+                    (a, b) => FISCAL_ORDER.indexOf(a) - FISCAL_ORDER.indexOf(b)
+                );
+                dataVals = labels.map(m => (monthData[m] / 10000000).toFixed(2));
+                pointBgColors = labels.map((m) =>
+                    !hasSelection || monthHighlightSet.has(m) ? colors.red : "#fff"
+                );
+            }
 
             charts.line.data.labels = labels;
             charts.line.data.datasets = [
                 {
-                    data: labels.map((m) => (monthData[m] / 10000000).toFixed(2)),
+                    data: dataVals,
                     borderColor: colors.red,
                     backgroundColor: "rgba(168, 24, 24, 0.05)",
                     fill: true,
                     tension: 0.3,
                     pointRadius: 3,
-                    pointBackgroundColor: labels.map((m) =>
-                        !hasSelection || monthHighlightSet.has(m) ? colors.red : "#fff",
-                    ),
+                    pointBackgroundColor: pointBgColors,
                 },
             ];
             charts.line.update();
