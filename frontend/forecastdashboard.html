@@ -3877,7 +3877,7 @@ th.sortable.abs span {
                 </div>
 
                 <div class="flex flex-col relative">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Dispatch
+                    <label id="dispatchMonthLabel" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Dispatch
                         Month</label>
                     <button id="monthDropdownBtn" onclick="toggleMonthDropdown()"
                         class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-md focus:ring-yogi-red focus:border-yogi-red block w-40 p-2 text-left flex justify-between items-center">
@@ -4255,7 +4255,16 @@ th.sortable.abs span {
             2613: "2613-BMWIL-PICKLING (SPARE)",
             2614: "2614-BMWIL-TRIMMING (SPARE)",
             2615: "2615-BMWIL-CRM (SPARE)",
+            2617: "2617-APL-CGL",
+            2618: "2618-APL-CGL",
+            2622: "2622-ELEC-JSW",
             2624: "2624-VIKAS-6HI CRM",
+            2626: "2626-JSW-CPL",
+            2629: "2629-JSW-CPL",
+            2630: "2630-JSW-6HI CRM",
+            2631: "2631-JSW-SPM",
+            2634: "2634-DYNA-TRIMMING",
+            "2428FUR": "2428FUR-BMWIL-CGL",
         };
 
         const PM_MAPPING = {
@@ -4462,10 +4471,13 @@ th.sortable.abs span {
             if (p.startsWith("26E") || p.startsWith("25E") || p.startsWith("26M")) {
                 return "Miscellaneous";
             }
+            if (state.context === "forecast") {
+                return p;
+            }
             if (state.dynamicProjectNameMapping && state.dynamicProjectNameMapping[p]) {
                 return state.dynamicProjectNameMapping[p];
             }
-            return PROJECT_MAPPING[p] || "Miscellaneous";
+            return PROJECT_MAPPING[p] || p || "Miscellaneous";
         }
         function getPMName(p, wbs) {
             if (!p) return "";
@@ -4473,13 +4485,20 @@ th.sortable.abs span {
             if (p.startsWith("26E") || p.startsWith("25E") || p.startsWith("26M")) {
                 return "";
             }
+            const code = p.length >= 4 && /^\d{4}/.test(p) ? p.substring(0, 4) : p;
+            if (wbs && state.dynamicPMMapping && state.dynamicPMMapping[`${code}_WBS_${wbs}`]) {
+                return state.dynamicPMMapping[`${code}_WBS_${wbs}`];
+            }
             if (wbs && state.dynamicPMMapping && state.dynamicPMMapping[`${p}_WBS_${wbs}`]) {
                 return state.dynamicPMMapping[`${p}_WBS_${wbs}`];
+            }
+            if (state.dynamicPMMapping && state.dynamicPMMapping[code]) {
+                return state.dynamicPMMapping[code];
             }
             if (state.dynamicPMMapping && state.dynamicPMMapping[p]) {
                 return state.dynamicPMMapping[p];
             }
-            return PM_MAPPING[p] || "";
+            return PM_MAPPING[code] || PM_MAPPING[p] || "";
         }
         function getLineName(p) {
             if (!p) return "";
@@ -4599,17 +4618,19 @@ th.sortable.abs span {
                     const pad = (n) => String(n).padStart(2, "0");
                     return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
                 };
-                // Sanitize project codes before populating database
-                rawData.forEach(item => {
-                    const wbsCode = String(item.WBSElementExternalID || item.wbs || item.WBS || "").trim();
-                    let proj = String(item.project || "").trim();
+                // Sanitize project codes for SAP data before populating database
+                if (state.context.startsWith("actuals")) {
+                    rawData.forEach(item => {
+                        const wbsCode = String(item.WBSElementExternalID || item.wbs || item.WBS || "").trim();
+                        let proj = String(item.project || "").trim();
 
-                    if (wbsCode.length >= 4 && /^\d{4}$/.test(wbsCode.substring(0, 4))) {
-                        item.project = wbsCode.substring(0, 4);
-                    } else if (/^\d{4}/.test(proj)) {
-                        item.project = proj.substring(0, 4);
-                    }
-                });
+                        if (wbsCode.length >= 4 && /^\d{4}$/.test(wbsCode.substring(0, 4))) {
+                            item.project = wbsCode.substring(0, 4);
+                        } else if (/^\d{4}/.test(proj)) {
+                            item.project = proj.substring(0, 4);
+                        }
+                    });
+                }
 
                 // Populate global database
                 database = rawData.map((item, index) => {
@@ -4683,6 +4704,7 @@ th.sortable.abs span {
                     monthRangeSpan.innerText = rangeText;
                 }
 
+                state.distinctMonths = distinctMonths;
                 populateMonthFilter(distinctMonths);
                 updateDashboard();
             } catch (err) {
@@ -4724,10 +4746,11 @@ th.sortable.abs span {
                 const statusSelect = document.getElementById("filter-status");
                 if (statusSelect) statusSelect.value = state.filters.status;
             }
-            const monthBtnText = document.getElementById("monthBtnText");
-            if (monthBtnText) {
-                monthBtnText.innerText = state.filters.month.length === 0 ? "All Months" : `${state.filters.month.length} Selected`;
+            if (state.viewMode) {
+                const viewModeSelect = document.getElementById("lineChartViewMode");
+                if (viewModeSelect) viewModeSelect.value = state.viewMode;
             }
+            updateMonthBtnText();
         }
 
         async function init() {
@@ -4922,11 +4945,21 @@ th.sortable.abs span {
                     }
                 }
 
-                if (
-                    state.filters.month.length > 0 &&
-                    !state.filters.month.includes(row.month)
-                )
-                    return false;
+                if (state.filters.month.length > 0) {
+                    if (state.viewMode === "quarterly") {
+                        const rowQ = getQuarter(row.month);
+                        const matches = state.filters.month.some(
+                            (f) => f === rowQ || f === row.month || f === formatMonthWithYear(row.month, row.context)
+                        );
+                        if (!matches) return false;
+                    } else {
+                        const rowFormatted = formatMonthWithYear(row.month, row.context);
+                        const matches = state.filters.month.some(
+                            (f) => f === row.month || f === rowFormatted
+                        );
+                        if (!matches) return false;
+                    }
+                }
                 if (mode === "highlight") {
                     if (state.selection.pm && row.pm !== state.selection.pm)
                         return false;
@@ -4935,8 +4968,17 @@ th.sortable.abs span {
                         row.product !== state.selection.product
                     )
                         return false;
-                    if (state.selection.month && row.month !== state.selection.month)
-                        return false;
+                    if (state.selection.month) {
+                        if (state.viewMode === "quarterly") {
+                            const rowQ = getQuarter(row.month);
+                            if (rowQ !== state.selection.month && row.month !== state.selection.month)
+                                return false;
+                        } else {
+                            const rowFormatted = formatMonthWithYear(row.month, row.context);
+                            if (row.month !== state.selection.month && rowFormatted !== state.selection.month)
+                                return false;
+                        }
+                    }
                 }
                 return true;
             });
@@ -4950,6 +4992,9 @@ th.sortable.abs span {
 
         function toggleViewMode(mode) {
             state.viewMode = mode;
+            state.filters.month = [];
+            state.selection.month = null;
+            populateMonthOrQuarterFilter();
             updateLabels(state.context);
             updateDashboard();
         }
@@ -4965,7 +5010,7 @@ th.sortable.abs span {
             state.searchQuery = "";
 
             document.getElementById("filter-status").value = "all";
-            document.getElementById("monthBtnText").innerText = "All Months";
+            updateMonthBtnText();
 
             const searchInput = document.getElementById("assemblySearch");
             if (searchInput) searchInput.value = "";
@@ -5138,6 +5183,21 @@ th.sortable.abs span {
             });
         }
 
+        function interleavePieEntries(entries) {
+            if (!entries || entries.length <= 2) return entries;
+            const sorted = [...entries];
+            const mid = Math.ceil(sorted.length / 2);
+            const large = sorted.slice(0, mid);
+            const small = sorted.slice(mid).reverse();
+
+            const result = [];
+            while (large.length || small.length) {
+                if (large.length) result.push(large.shift());
+                if (small.length) result.push(small.shift());
+            }
+            return result;
+        }
+
         function updateVisuals(baseData, highlightData, hasSelection) {
             const colors = {
                 red: "#a81818",
@@ -5238,19 +5298,24 @@ th.sortable.abs span {
                 const sortedEntries = Object.entries(pmCountMap).sort(
                     (a, b) => b[1] - a[1],
                 );
-                const pmKeys = sortedEntries.map((e) => e[0]);
-                const pmValues = sortedEntries.map((e) => e[1]);
+                const interleavedEntries = interleavePieEntries(sortedEntries);
+                const pmKeys = interleavedEntries.map((e) => e[0]);
+                const pmValues = interleavedEntries.map((e) => e[1]);
+                const totalAssm = pmValues.reduce((sum, v) => sum + v, 0);
 
                 charts.pie.options.cutout = "0%";
                 charts.pie.options.layout.padding = 60;
                 charts.pie.options.plugins.legend.display = false;
                 charts.pie.options.plugins.datalabels = {
-                    display: true,
+                    display: (ctx) => {
+                        const val = ctx.dataset.data[ctx.dataIndex];
+                        return totalAssm > 0 && (val / totalAssm) >= 0.015 ? 'auto' : false;
+                    },
                     color: "#333",
                     anchor: "end",
                     align: "end",
-                    offset: 5,
-                    font: { weight: "bold", size: 10 },
+                    offset: 6,
+                    font: { weight: "bold", size: 10, family: "'Inter', sans-serif" },
                     formatter: (val, ctx) =>
                         `${ctx.chart.data.labels[ctx.dataIndex]} ${val}`,
                 };
@@ -5305,16 +5370,18 @@ th.sortable.abs span {
                 const monthData = groupBy(baseData, "month");
                 const monthHighlightSet = new Set(highlightData.map((d) => d.month));
                 const FISCAL_ORDER = [
-                    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+                    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Sept",
                     "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"
                 ];
-                labels = Object.keys(monthData).sort(
+                const rawMonths = Object.keys(monthData).sort(
                     (a, b) => FISCAL_ORDER.indexOf(a) - FISCAL_ORDER.indexOf(b)
                 );
-                dataVals = labels.map(m => (monthData[m] / 10000000).toFixed(2));
-                pointBgColors = labels.map((m) =>
-                    !hasSelection || monthHighlightSet.has(m) ? colors.red : "#fff"
-                );
+                labels = rawMonths.map((m) => formatMonthWithYear(m));
+                dataVals = rawMonths.map((m) => (monthData[m] / 10000000).toFixed(2));
+                pointBgColors = rawMonths.map((m) => {
+                    const fmtM = formatMonthWithYear(m);
+                    return !hasSelection || monthHighlightSet.has(m) || monthHighlightSet.has(fmtM) ? colors.red : "#fff";
+                });
             }
 
             charts.line.data.labels = labels;
@@ -5516,6 +5583,7 @@ th.sortable.abs span {
             container.innerHTML = "";
             let hasFilter = false;
             const allFilters = { ...state.filters, ...state.selection };
+            const isQuarterly = state.viewMode === "quarterly";
 
             Object.entries(allFilters).forEach(([key, val]) => {
                 if (val && (Array.isArray(val) ? val.length > 0 : true)) {
@@ -5524,15 +5592,16 @@ th.sortable.abs span {
                     const bgClass = isSelection
                         ? "bg-red-100 text-red-800"
                         : "bg-blue-100 text-blue-800";
+                    const displayKey = key === "month" ? (isQuarterly ? "QUARTER" : "MONTH") : key.toUpperCase();
                     const displayVal = Array.isArray(val)
-                        ? `${val.length} Months`
+                        ? (val.length === 1 ? val[0] : `${val.length} ${isQuarterly ? "Quarters" : "Months"}`)
                         : val;
                     const chip = document.createElement("div");
                     chip.className = `${bgClass} text-xs font-semibold px-2 py-1 rounded flex items-center gap-1`;
                     const closeAction = isSelection
                         ? `applyChartFilter('${key}', '${val}')`
                         : `applySlicer('${key}', 'all'); if(document.getElementById('filter-${key}')) document.getElementById('filter-${key}').value='all'`;
-                    chip.innerHTML = `<span>${key.toUpperCase()}: ${displayVal}</span><button onclick="${closeAction}" class="hover:text-red-600 font-bold">&times;</button>`;
+                    chip.innerHTML = `<span>${displayKey}: ${displayVal}</span><button onclick="${closeAction}" class="hover:text-red-600 font-bold">&times;</button>`;
                     container.appendChild(chip);
                 }
             });
@@ -5546,44 +5615,156 @@ th.sortable.abs span {
             updateDashboard();
         }
 
-        function populateMonthFilter(months) {
-            const list = document.getElementById("monthDropdownList");
-            list.innerHTML = "";
-            if (months.length === 0) {
-                list.innerHTML = `<div class="p-2 text-xs text-gray-500">No data</div>`;
-                return;
+        function formatMonthWithYear(m, context = state.context) {
+            if (!m) return "";
+            let cleanM = String(m).trim();
+            if (cleanM.includes("'")) return cleanM;
+
+            let startYear = 2026;
+            if (context === "actuals-2526") {
+                startYear = 2025;
+            } else if (context === "actuals-2627" || context === "forecast") {
+                startYear = 2026;
             }
-            months.forEach((m) => {
-                const item = document.createElement("div");
-                item.className =
-                    "flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer";
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.checked = state.filters.month.includes(m);
-                checkbox.className =
-                    "form-checkbox h-3 w-3 text-yogi-red rounded border-gray-300 focus:ring-yogi-red pointer-events-none";
-                const span = document.createElement("span");
-                span.className = "ml-2 text-xs text-gray-700 select-none";
-                span.innerText = m;
-                item.appendChild(checkbox);
-                item.appendChild(span);
-                item.onclick = (e) => {
-                    e.stopPropagation();
-                    toggleMonthFilter(m);
-                    checkbox.checked = state.filters.month.includes(m);
-                };
-                list.appendChild(item);
-            });
+
+            const baseM = cleanM.replace(/[^a-zA-Z]/g, "");
+            let displayM = baseM;
+            if (displayM === "Sep") displayM = "Sept";
+
+            const isNextYear = ["Jan", "Feb", "Mar"].includes(baseM);
+            const yr = isNextYear ? startYear + 1 : startYear;
+            const yrSuffix = "'" + String(yr).slice(-2);
+
+            return `${displayM}${yrSuffix}`;
+        }
+
+        function getQuarter(month) {
+            if (!month) return "";
+            const m = String(month).trim();
+            if (["Apr", "May", "Jun"].includes(m)) return "Q1";
+            if (["Jul", "Aug", "Sep"].includes(m)) return "Q2";
+            if (["Oct", "Nov", "Dec"].includes(m)) return "Q3";
+            if (["Jan", "Feb", "Mar"].includes(m)) return "Q4";
+            return m;
+        }
+
+        function getAvailableQuarters() {
+            const now = new Date();
+            const m = now.getMonth() + 1; // 1 (Jan) to 12 (Dec)
+
+            if (state.context === "forecast") {
+                // Forecast: Current & Future Quarters of current FY (past quarters are gone)
+                if (m >= 4 && m <= 6) return ["Q1", "Q2", "Q3", "Q4"];
+                if (m >= 7 && m <= 9) return ["Q2", "Q3", "Q4"];
+                if (m >= 10 && m <= 12) return ["Q3", "Q4"];
+                return ["Q4"];
+            } else {
+                // Actuals / Revenue: Past & Current Quarters
+                if (state.context === "actuals-2526") {
+                    return ["Q1", "Q2", "Q3", "Q4"];
+                }
+                if (m >= 4 && m <= 6) return ["Q1"];
+                if (m >= 7 && m <= 9) return ["Q1", "Q2"];
+                if (m >= 10 && m <= 12) return ["Q1", "Q2", "Q3"];
+                return ["Q1", "Q2", "Q3", "Q4"];
+            }
+        }
+
+        function updateMonthBtnText() {
+            const isQuarterly = state.viewMode === "quarterly";
+            const btnText = document.getElementById("monthBtnText");
+            if (!btnText) return;
+            if (state.filters.month.length === 0) {
+                btnText.innerText = isQuarterly ? "All Quarters" : "All Months";
+            } else if (state.filters.month.length === 1) {
+                btnText.innerText = state.filters.month[0];
+            } else {
+                btnText.innerText = `${state.filters.month.length} Selected`;
+            }
+        }
+
+        function populateMonthOrQuarterFilter(months) {
+            if (months) state.distinctMonths = months;
+            const list = document.getElementById("monthDropdownList");
+            if (!list) return;
+            list.innerHTML = "";
+
+            const isQuarterly = state.viewMode === "quarterly";
+
+            const labelEl = document.getElementById("dispatchMonthLabel");
+            if (labelEl) {
+                labelEl.innerText = isQuarterly ? "Dispatch Quarter" : "Dispatch Month";
+            }
+
+            updateMonthBtnText();
+
+            if (isQuarterly) {
+                const availableQuarters = getAvailableQuarters();
+                if (availableQuarters.length === 0) {
+                    list.innerHTML = `<div class="p-2 text-xs text-gray-500">No data</div>`;
+                    return;
+                }
+                availableQuarters.forEach((q) => {
+                    const item = document.createElement("div");
+                    item.className =
+                        "flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer";
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.checked = state.filters.month.includes(q);
+                    checkbox.className =
+                        "form-checkbox h-3 w-3 text-yogi-red rounded border-gray-300 focus:ring-yogi-red pointer-events-none";
+                    const span = document.createElement("span");
+                    span.className = "ml-2 text-xs text-gray-700 select-none font-bold";
+                    span.innerText = q;
+                    item.appendChild(checkbox);
+                    item.appendChild(span);
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        toggleMonthFilter(q);
+                        checkbox.checked = state.filters.month.includes(q);
+                    };
+                    list.appendChild(item);
+                });
+            } else {
+                const monthList = state.distinctMonths || [];
+                if (monthList.length === 0) {
+                    list.innerHTML = `<div class="p-2 text-xs text-gray-500">No data</div>`;
+                    return;
+                }
+                monthList.forEach((m) => {
+                    const formattedM = formatMonthWithYear(m);
+                    const item = document.createElement("div");
+                    item.className =
+                        "flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer";
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.checked = state.filters.month.includes(formattedM) || state.filters.month.includes(m);
+                    checkbox.className =
+                        "form-checkbox h-3 w-3 text-yogi-red rounded border-gray-300 focus:ring-yogi-red pointer-events-none";
+                    const span = document.createElement("span");
+                    span.className = "ml-2 text-xs text-gray-700 select-none";
+                    span.innerText = formattedM;
+                    item.appendChild(checkbox);
+                    item.appendChild(span);
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        toggleMonthFilter(formattedM);
+                        checkbox.checked = state.filters.month.includes(formattedM);
+                    };
+                    list.appendChild(item);
+                });
+            }
+        }
+
+        function populateMonthFilter(months) {
+            populateMonthOrQuarterFilter(months);
         }
 
         function toggleMonthFilter(month) {
             const idx = state.filters.month.indexOf(month);
             if (idx > -1) state.filters.month.splice(idx, 1);
             else state.filters.month.push(month);
-            document.getElementById("monthBtnText").innerText =
-                state.filters.month.length === 0
-                    ? "All Months"
-                    : `${state.filters.month.length} Selected`;
+            updateMonthBtnText();
             updateDashboard();
         }
 
