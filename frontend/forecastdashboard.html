@@ -3854,17 +3854,16 @@ th.sortable.abs span {
 
             <div
                 class="flex flex-wrap gap-3 w-full xl:w-auto justify-end bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                <div class="flex flex-col" id="dispatch-status-container">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">All
-                        Statuses</label>
-                    <select id="filter-status" onchange="applySlicer('status', this.value)"
-                        class="custom-select bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-md focus:ring-yogi-red focus:border-yogi-red block w-40 p-2">
-                        <option value="all">All Statuses</option>
-                        <option value="Bought Out">Bought Out</option>
-                        <option value="In House">In House</option>
-                        <option value="Dispatched">Dispatched</option>
-                        <option value="Not Dispatched">Not Dispatched</option>
-                    </select>
+                <div class="flex flex-col relative" id="dispatch-status-container">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">All Statuses</label>
+                    <button id="statusDropdownBtn" onclick="toggleStatusDropdown()"
+                        class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-md focus:ring-yogi-red focus:border-yogi-red block w-40 p-2 text-left flex justify-between items-center">
+                        <span id="statusBtnText" class="truncate w-11/12">All Statuses</span>
+                        <i class="fa-solid fa-chevron-down text-xs text-gray-500"></i>
+                    </button>
+                    <div id="statusDropdownList"
+                        class="hidden absolute top-[60px] z-50 w-48 bg-white shadow-lg border border-gray-200 rounded-md max-h-60 overflow-y-auto">
+                    </div>
                 </div>
 
                 <div class="flex flex-col" id="view-mode-container">
@@ -3980,7 +3979,17 @@ th.sortable.abs span {
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div
                 class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-wrap justify-between items-center gap-4">
-                <h3 class="font-bold text-gray-800">Detailed Assemblies Value</h3>
+                <div class="flex items-center gap-4">
+                    <h3 class="font-bold text-gray-800">Detailed Assemblies Value</h3>
+                    <div class="hidden xl:flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase">
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full" style="background-color: #3b82f6;"></span> Bought Out</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full" style="background-color: #f97316;"></span> In House</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full" style="background-color: #22c55e;"></span> Dispatched</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full border border-gray-300 bg-white"></span> Not Dispatched</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full" style="background: linear-gradient(135deg, #3b82f6 50%, #22c55e 50%);"></span> BO+Disp</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full" style="background: linear-gradient(135deg, #f97316 50%, #22c55e 50%);"></span> IH+Disp</span>
+                    </div>
+                </div>
                 <div class="flex items-center gap-3">
                     <div id="forecastSearchContainer" class="relative">
                         <input type="text" id="assemblySearch" oninput="handleSearch(this.value)"
@@ -4150,7 +4159,7 @@ th.sortable.abs span {
             context: "forecast",
             viewMode: "monthly",
             searchQuery: "", // Added search state
-            filters: { month: [], status: null },
+            filters: { month: [], status: [] },
             selection: { pm: null, product: null, month: null },
             expandedRows: [],
             sort: { key: "billing", direction: "desc" },
@@ -4441,6 +4450,7 @@ th.sortable.abs span {
             2540: "ELECTRICAL",
             2541: "ELECTRICAL",
             2542: "ELECTRICAL",
+            2622: "ELECTRICAL",
             2543: "SPARE",
             2544: "REWINDING",
             2545: "REVAMP",
@@ -4471,13 +4481,14 @@ th.sortable.abs span {
             if (p.startsWith("26E") || p.startsWith("25E") || p.startsWith("26M")) {
                 return "Miscellaneous";
             }
+            const code = p.length >= 4 && /^\d{4}/.test(p) ? p.substring(0, 4) : p;
             if (state.context === "forecast") {
-                return p;
+                return PROJECT_MAPPING[code] || PROJECT_MAPPING[p] || p;
             }
             if (state.dynamicProjectNameMapping && state.dynamicProjectNameMapping[p]) {
                 return state.dynamicProjectNameMapping[p];
             }
-            return PROJECT_MAPPING[p] || p || "Miscellaneous";
+            return PROJECT_MAPPING[code] || PROJECT_MAPPING[p] || p || "Miscellaneous";
         }
         function getPMName(p, wbs) {
             if (!p) return "";
@@ -4506,7 +4517,8 @@ th.sortable.abs span {
             if (p.startsWith("26E") || p.startsWith("25E") || p.startsWith("26M")) {
                 return "";
             }
-            return LINE_MAPPING[p] || "";
+            const code = p.length >= 4 && /^\d{4}/.test(p) ? p.substring(0, 4) : p;
+            return LINE_MAPPING[code] || LINE_MAPPING[p] || "";
         }
 
         function changeAssemblySort(mode) {
@@ -4673,7 +4685,7 @@ th.sortable.abs span {
                         name: getProjectName(item.project),
                         pm: getPMName(item.project, wbsCode) || item.pm,
                         wbs: wbsCode,
-                        product: item.category,
+                        product: getLineName(item.project) || item.category,
                         month: item.month ? item.month.trim() : "",
                         status: status,
                         source: source,
@@ -4756,6 +4768,7 @@ th.sortable.abs span {
         async function init() {
             loadStateFromUrl();
             initCharts();
+            populateStatusFilter();
             await loadDynamicMappings();
             loadDashboardData();
         }
@@ -4921,7 +4934,7 @@ th.sortable.abs span {
         }
 
         // --- 3. FILTERING LOGIC ---
-        function getData(mode = "highlight") {
+        function getData(mode = "highlight", excludeType = null) {
             return database.filter((row) => {
                 // --- Text Search Logic ---
                 if (state.searchQuery) {
@@ -4935,14 +4948,22 @@ th.sortable.abs span {
                     if (!projMatch && !asmMatch) return false;
                 }
 
-                if (state.filters.status) {
-                    const filterVal = state.filters.status;
-
-                    if (["Dispatched", "Not Dispatched", "Hold"].includes(filterVal)) {
-                        if (row.status !== filterVal) return false;
-                    } else if (["Bought Out", "In House"].includes(filterVal)) {
-                        if (row.source !== filterVal) return false;
+                if (state.filters.status && state.filters.status.length > 0) {
+                    const filterVals = state.filters.status;
+                    let selectedSource = filterVals.find(x => ["Bought Out", "In House"].includes(x));
+                    let selectedStatus = filterVals.find(x => ["Dispatched", "Not Dispatched"].includes(x));
+                    
+                    let passSource = true;
+                    let passStatus = true;
+                    
+                    if (selectedSource) {
+                        passSource = (row.source === selectedSource);
                     }
+                    if (selectedStatus) {
+                        passStatus = (row.status === selectedStatus);
+                    }
+                    
+                    if (!passSource || !passStatus) return false;
                 }
 
                 if (state.filters.month.length > 0) {
@@ -4960,15 +4981,17 @@ th.sortable.abs span {
                         if (!matches) return false;
                     }
                 }
+
                 if (mode === "highlight") {
-                    if (state.selection.pm && row.pm !== state.selection.pm)
+                    if (state.selection.pm && excludeType !== "pm" && row.pm !== state.selection.pm)
                         return false;
                     if (
                         state.selection.product &&
+                        excludeType !== "product" &&
                         row.product !== state.selection.product
                     )
                         return false;
-                    if (state.selection.month) {
+                    if (state.selection.month && excludeType !== "month") {
                         if (state.viewMode === "quarterly") {
                             const rowQ = getQuarter(row.month);
                             if (rowQ !== state.selection.month && row.month !== state.selection.month)
@@ -5005,18 +5028,21 @@ th.sortable.abs span {
         }
 
         function resetAllFilters() {
-            state.filters = { month: [], status: null };
+            state.filters = { month: [], status: [] };
             state.selection = { pm: null, product: null, month: null };
             state.searchQuery = "";
 
-            document.getElementById("filter-status").value = "all";
             updateMonthBtnText();
+            updateStatusBtnText();
 
             const searchInput = document.getElementById("assemblySearch");
             if (searchInput) searchInput.value = "";
 
             document
                 .querySelectorAll("#monthDropdownList input")
+                .forEach((cb) => (cb.checked = false));
+            document
+                .querySelectorAll("#statusDropdownList input")
                 .forEach((cb) => (cb.checked = false));
             updateDashboard();
         }
@@ -5031,8 +5057,13 @@ th.sortable.abs span {
                 state.selection.month;
             const activeData = hasSelection ? highlightData : baseData;
 
+            // Generate specialized datasets for PowerBI-like cross-filtering
+            const activeDataPM = hasSelection ? getData("highlight", "pm") : baseData;
+            const activeDataProd = hasSelection ? getData("highlight", "product") : baseData;
+            const activeDataMonth = hasSelection ? getData("highlight", "month") : baseData;
+
             updateKPIs(activeData);
-            updateVisuals(baseData, highlightData, hasSelection);
+            updateVisuals(baseData, highlightData, hasSelection, activeDataPM, activeDataProd, activeDataMonth);
             renderTable(activeData);
             updateFilterChips();
             updateUrlFromState();
@@ -5056,7 +5087,11 @@ th.sortable.abs span {
                 " Cr";
             document.getElementById("kpi-assemblies").innerText = totalAssm;
 
-            const avg = totalVal / 10000000 / 12;
+            let divisor = distMonthCount > 0 ? distMonthCount : 1;
+            if (state.viewMode === "quarterly") {
+                divisor = divisor / 3;
+            }
+            const avg = totalVal / 10000000 / divisor;
             document.getElementById("kpi-avg").innerText =
                 "₹ " +
                 avg.toLocaleString("en-IN", {
@@ -5198,7 +5233,7 @@ th.sortable.abs span {
             return result;
         }
 
-        function updateVisuals(baseData, highlightData, hasSelection) {
+        function updateVisuals(baseData, highlightData, hasSelection, activeDataPM, activeDataProd, activeDataMonth) {
             const colors = {
                 red: "#a81818",
                 pink: "#fca5a5",
@@ -5226,7 +5261,7 @@ th.sortable.abs span {
                 return map;
             };
 
-            const pmData = groupBy(baseData, "pm");
+            const pmData = groupBy(activeDataPM, "pm");
             const pmHighlightSet = hasSelection
                 ? new Set(highlightData.map((d) => d.pm))
                 : null;
@@ -5249,7 +5284,7 @@ th.sortable.abs span {
             charts.bar.update();
 
             if (state.context === "forecast") {
-                const prodData = groupBy(baseData, "product");
+                const prodData = groupBy(activeDataProd, "product");
                 const prodHighlightSet = new Set(highlightData.map((d) => d.product));
 
                 charts.pie.options.cutout = "60%";
@@ -5290,7 +5325,7 @@ th.sortable.abs span {
                 ];
             } else {
                 const pmCountMap = {};
-                baseData.forEach((d) => {
+                activeDataProd.forEach((d) => {
                     if (d.assembly && d.assembly.trim() !== "")
                         pmCountMap[d.pm] = (pmCountMap[d.pm] || 0) + 1;
                 });
@@ -5350,7 +5385,7 @@ th.sortable.abs span {
                 const quarterData = {};
                 const quarterHighlightSet = new Set();
 
-                baseData.forEach(d => {
+                activeDataMonth.forEach(d => {
                     const q = getQuarter(d.month);
                     quarterData[q] = (quarterData[q] || 0) + d.val;
                 });
@@ -5367,7 +5402,7 @@ th.sortable.abs span {
                     !hasSelection || quarterHighlightSet.has(q) ? colors.red : "#fff"
                 );
             } else {
-                const monthData = groupBy(baseData, "month");
+                const monthData = groupBy(activeDataMonth, "month");
                 const monthHighlightSet = new Set(highlightData.map((d) => d.month));
                 const FISCAL_ORDER = [
                     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Sept",
@@ -5532,15 +5567,28 @@ th.sortable.abs span {
 
                     itemsHtml = sortedItems
                         .map((i) => {
-                            const badgeClass =
-                                i.status === "Dispatched"
-                                    ? "success-badge"
-                                    : "danger-badge";
+                            let bgStyle = "";
+                            let badgeClasses = "px-3 py-1 rounded-full text-xs font-bold inline-block ";
 
-                            const statusBadge =
-                                i.status === "Dispatched"
-                                    ? `<span class="success-badge">${i.month} ${i.year}</span>`
-                                    : `<span class="">${i.month} ${i.year}</span>`;
+                            if (i.status === "Dispatched") {
+                                if (i.source === "Bought Out") {
+                                    bgStyle = "background: linear-gradient(135deg, #3b82f6 50%, #22c55e 50%); color: white;";
+                                } else if (i.source === "In House") {
+                                    bgStyle = "background: linear-gradient(135deg, #f97316 50%, #22c55e 50%); color: white;";
+                                } else {
+                                    bgStyle = "background-color: #22c55e; color: white;";
+                                }
+                            } else {
+                                if (i.source === "Bought Out") {
+                                    bgStyle = "background-color: #3b82f6; color: white;";
+                                } else if (i.source === "In House") {
+                                    bgStyle = "background-color: #f97316; color: white;";
+                                } else {
+                                    bgStyle = "background-color: transparent; color: #6b7280;";
+                                }
+                            }
+
+                            const statusBadge = `<span class="${badgeClasses}" style="${bgStyle}">${i.month} ${i.year}</span>`;
 
                             return `<div class="row d-flex flex justify-between items-center py-2 border-b border-gray-200 last:border-0 text-sm hover:bg-white transition-colors">
 <span class="col-4 text-gray-600 pl-4 border-l-2 ${i.status === "Dispatched"
@@ -5551,8 +5599,6 @@ th.sortable.abs span {
                 ${i.assembly || "–"}
 </span>
 <span class="col-4 text-center text-gray-600 flex flex-col items-center justify-center">
-
-
                   ${statusBadge}
 </span>
 <span class="text-right col-4 font-medium text-gray-800">₹ ${i.val.toLocaleString(
@@ -5598,9 +5644,14 @@ th.sortable.abs span {
                         : val;
                     const chip = document.createElement("div");
                     chip.className = `${bgClass} text-xs font-semibold px-2 py-1 rounded flex items-center gap-1`;
-                    const closeAction = isSelection
-                        ? `applyChartFilter('${key}', '${val}')`
-                        : `applySlicer('${key}', 'all'); if(document.getElementById('filter-${key}')) document.getElementById('filter-${key}').value='all'`;
+                    let closeAction = "";
+                    if (isSelection) {
+                        closeAction = `applyChartFilter('${key}', '${val}')`;
+                    } else if (key === "month") {
+                        closeAction = `state.filters.month = []; updateMonthBtnText(); document.querySelectorAll('#monthDropdownList input').forEach(cb => cb.checked = false); updateDashboard();`;
+                    } else if (key === "status") {
+                        closeAction = `state.filters.status = []; updateStatusBtnText(); document.querySelectorAll('#statusDropdownList input').forEach(cb => cb.checked = false); updateDashboard();`;
+                    }
                     chip.innerHTML = `<span>${displayKey}: ${displayVal}</span><button onclick="${closeAction}" class="hover:text-red-600 font-bold">&times;</button>`;
                     container.appendChild(chip);
                 }
@@ -5768,17 +5819,91 @@ th.sortable.abs span {
             updateDashboard();
         }
 
+        function updateStatusBtnText() {
+            const btnText = document.getElementById("statusBtnText");
+            if (!btnText) return;
+            if (state.filters.status.length === 0) {
+                btnText.innerText = "All Statuses";
+            } else if (state.filters.status.length === 1) {
+                btnText.innerText = state.filters.status[0];
+            } else {
+                btnText.innerText = `${state.filters.status.length} Selected`;
+            }
+        }
+
+        function populateStatusFilter() {
+            const list = document.getElementById("statusDropdownList");
+            if (!list) return;
+            list.innerHTML = "";
+
+            const statuses = ["Bought Out", "In House", "Dispatched", "Not Dispatched"];
+            
+            statuses.forEach((s) => {
+                const item = document.createElement("div");
+                item.className = "flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer";
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = state.filters.status.includes(s);
+                checkbox.className = "form-checkbox h-3 w-3 text-yogi-red rounded border-gray-300 focus:ring-yogi-red pointer-events-none";
+                const span = document.createElement("span");
+                span.className = "ml-2 text-sm text-gray-700 pointer-events-none";
+                span.innerText = s;
+                item.appendChild(checkbox);
+                item.appendChild(span);
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleStatusFilter(s);
+                    // update all checkboxes to reflect mutual exclusivity
+                    Array.from(list.querySelectorAll('input')).forEach(cb => {
+                        cb.checked = state.filters.status.includes(cb.nextElementSibling.innerText);
+                    });
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function toggleStatusFilter(status) {
+            const isSource = ["Bought Out", "In House"].includes(status);
+            const isDispatch = ["Dispatched", "Not Dispatched"].includes(status);
+
+            const idx = state.filters.status.indexOf(status);
+            if (idx > -1) {
+                state.filters.status.splice(idx, 1);
+            } else {
+                if (isSource) {
+                    state.filters.status = state.filters.status.filter(s => !["Bought Out", "In House"].includes(s));
+                }
+                if (isDispatch) {
+                    state.filters.status = state.filters.status.filter(s => !["Dispatched", "Not Dispatched"].includes(s));
+                }
+                state.filters.status.push(status);
+            }
+            updateStatusBtnText();
+            updateDashboard();
+        }
+
+        function toggleStatusDropdown() {
+            document.getElementById("statusDropdownList").classList.toggle("hidden");
+        }
+
         function toggleMonthDropdown() {
             document.getElementById("monthDropdownList").classList.toggle("hidden");
         }
         window.addEventListener("click", (e) => {
-            const btn = document.getElementById("monthDropdownBtn");
-            const list = document.getElementById("monthDropdownList");
-            if (!btn.contains(e.target) && !list.contains(e.target))
-                list.classList.add("hidden");
+            const monthBtn = document.getElementById("monthDropdownBtn");
+            const monthList = document.getElementById("monthDropdownList");
+            if (monthBtn && monthList && !monthBtn.contains(e.target) && !monthList.contains(e.target))
+                monthList.classList.add("hidden");
+
+            const statusBtn = document.getElementById("statusDropdownBtn");
+            const statusList = document.getElementById("statusDropdownList");
+            if (statusBtn && statusList && !statusBtn.contains(e.target) && !statusList.contains(e.target))
+                statusList.classList.add("hidden");
         });
 
         document.addEventListener("DOMContentLoaded", init);
+
+
 
         async function generateProjectPDF(rowId) {
             const { jsPDF } = window.jspdf;

@@ -268,3 +268,16 @@ The script was expanded significantly (from ~52KB to ~93KB) with advanced functi
 - **URL State Synchronization:** Built `updateUrlFromState` and `loadStateFromUrl` so that active filters (PMs, months, search queries) are instantly synced to the browser URL, allowing deep-linking and state preservation on reload.
 - **Chart Visual Improvements:** Introduced `interleavePieEntries` to ensure that small/large pie chart slices alternate, preventing visual overlap of data labels on the doughnut charts.
 - **Auth Flow Safeties:** Added `handleUnauthorized` and `logout` to properly catch 401/403 SAP API errors and cleanly clear the user session.
+
+---
+
+## 11. Project Evolution & Current Status
+
+The dashboard has gone through a significant evolutionary journey:
+1. **Static Origins**: Started as a simple static dashboard replicating PowerBI functionality.
+2. **Data Integration**: Connected to Excel for forecasting and SAP for revenue actuals.
+3. **Live Environment & Fork**: Implemented into the main live website as `originalforecastDashboard.html`. To test changes without affecting production, a separate replica was created at `yddashboard.vercel.app`.
+4. **Backporting Changes**: After successful experiments on the Vercel replica, the goal was to backport these improvements to the live dashboard.
+5. **Standalone Refactoring**: To safely modify the live dashboard, `originalforecastDashboard.html` and its dependencies were downloaded into a local folder. The file was then refactored to remove external file dependencies, making it completely standalone.
+6. **API Proxying**: Because the live website fetched SAP data in a specific way, the local standalone dashboard was linked to fetch data through the `yddashboard.vercel.app` APIs to simulate the environment.
+7. **Current Pivot (SAP Lockout)**: The local setup worked perfectly, but excessive SAP API hits led to account lockouts and a forced password change. As a result, the direct SAP API connection in this environment is being discontinued/reworked to prevent further lockouts.
