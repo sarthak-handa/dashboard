@@ -3981,14 +3981,29 @@ th.sortable.abs span {
                 class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-wrap justify-between items-center gap-4">
                 <div class="flex items-center gap-4">
                     <h3 class="font-bold text-gray-800">Detailed Assemblies Value</h3>
-                    <div class="hidden xl:flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase">
-                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full" style="background-color: #3b82f6;"></span> Bought Out</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full" style="background-color: #f97316;"></span> In House</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full" style="background-color: #22c55e;"></span> Dispatched</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full border border-gray-300 bg-white"></span> Not Dispatched</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full" style="background: linear-gradient(135deg, #3b82f6 50%, #22c55e 50%);"></span> BO+Disp</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full" style="background: linear-gradient(135deg, #f97316 50%, #22c55e 50%);"></span> IH+Disp</span>
+                    <div id="tableQuickFilters" class="flex flex-wrap items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase">
+                        <button onclick="applyTableQuickFilter('bought-out')" id="qf-bought-out"
+                            class="quick-filter-btn flex items-center gap-1 px-2 py-1 rounded-full border border-gray-300 text-gray-500 bg-white hover:border-blue-400 hover:text-blue-600 transition-all duration-150 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: #3b82f6;"></span> Bought Out
+                        </button>
+                        <button onclick="applyTableQuickFilter('in-house')" id="qf-in-house"
+                            class="quick-filter-btn flex items-center gap-1 px-2 py-1 rounded-full border border-gray-300 text-gray-500 bg-white hover:border-orange-400 hover:text-orange-600 transition-all duration-150 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: #f97316;"></span> In House
+                        </button>
+                        <button onclick="applyTableQuickFilter('dispatched')" id="qf-dispatched"
+                            class="quick-filter-btn flex items-center gap-1 px-2 py-1 rounded-full border border-gray-300 text-gray-500 bg-white hover:border-green-400 hover:text-green-600 transition-all duration-150 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: #22c55e;"></span> Dispatched
+                        </button>
+                        <button onclick="applyTableQuickFilter('not-dispatched')" id="qf-not-dispatched"
+                            class="quick-filter-btn flex items-center gap-1 px-2 py-1 rounded-full border border-gray-300 text-gray-500 bg-white hover:border-gray-400 hover:text-gray-700 transition-all duration-150 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-gray-400 bg-white"></span> Not Dispatched
+                        </button>
+                        <button onclick="applyTableQuickFilter('bo-disp')" id="qf-bo-disp"
+                            class="quick-filter-btn flex items-center gap-1 px-2 py-1 rounded-full border border-gray-300 text-gray-500 bg-white hover:border-blue-400 hover:text-blue-600 transition-all duration-150 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background: linear-gradient(135deg, #3b82f6 50%, #22c55e 50%);"></span> BO+Disp
+                        </button>
                     </div>
+                
                 </div>
                 <div class="flex items-center gap-3">
                     <div id="forecastSearchContainer" class="relative">
@@ -4591,25 +4606,32 @@ th.sortable.abs span {
                         "none";
                 }
                 // -------------------------------------------------------------
-                // ACTUALS: Fetch from SAP S/4HANA OData API
+                // ACTUALS: Fetch from Excel backend API
                 // -------------------------------------------------------------
                 else if (state.context.startsWith("actuals")) {
-                    let apiUrl = `${API_URL}/api/sales2627`;
-                    if (state.context === "actuals-2526") {
-                        apiUrl = `${API_URL}/api/sales2526`;
-                    }
+                    let apiUrl = `${API_URL}/excel/actuals/dashboard?_t=${Date.now()}`;
 
                     const res = await fetch(apiUrl, {
                         headers: {
                             Authorization: `Bearer ${localStorage.getItem("token")}`,
                         },
                     });
-                    if (!res.ok) throw new Error("SAP fetch failed");
-                    const sapResponse = await res.json();
-                    console.log("SAP Data:", sapResponse);
+                    if (!res.ok) throw new Error("Excel actuals fetch failed");
+                    const excelResponse = await res.json();
+                    
+                    const is2526 = state.context === "actuals-2526";
+                    const startYear = is2526 ? 2025 : 2026;
+                    const startFiscal = new Date(startYear, 3, 1); // April 1st
+                    const endFiscal = new Date(startYear + 1, 2, 31, 23, 59, 59); // March 31st
 
-                    // Data is already mapped by the Vercel API endpoint
-                    rawData = sapResponse.data || [];
+                    rawData = (excelResponse.data || []).filter(item => {
+                        if (!item.dispatchMonth) return false;
+                        const d = new Date(item.dispatchMonth);
+                        return !isNaN(d) && d >= startFiscal && d <= endFiscal;
+                    });
+                    
+                    fiscalYear = excelResponse.fiscalYear || fiscalYear;
+                    lastUpdated = excelResponse.lastUpdated || lastUpdated;
 
                     document.getElementById("excelUpdateTimeDiv2").style.display = "block";
                     document.getElementById("excelUpdateTimeDiv").style.display = "none";
@@ -4731,12 +4753,12 @@ th.sortable.abs span {
             if (state.context !== "forecast") params.set("context", state.context);
             if (state.viewMode !== "monthly") params.set("viewMode", state.viewMode);
             if (state.searchQuery) params.set("search", state.searchQuery);
-            if (state.filters.status) params.set("status", state.filters.status);
+            if (state.filters.status && state.filters.status.length > 0) params.set("status", state.filters.status.join(","));
             if (state.filters.month && state.filters.month.length > 0) params.set("months", state.filters.month.join(","));
             if (state.selection.pm) params.set("pm", state.selection.pm);
             if (state.selection.product) params.set("product", state.selection.product);
 
-            const newUrl = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
+            const newUrl = "/" + (params.toString() ? "?" + params.toString() : "");
             window.history.replaceState(null, "", newUrl);
         }
 
@@ -4745,7 +4767,7 @@ th.sortable.abs span {
             if (params.has("context")) state.context = params.get("context");
             if (params.has("viewMode")) state.viewMode = params.get("viewMode");
             if (params.has("search")) state.searchQuery = params.get("search");
-            if (params.has("status")) state.filters.status = params.get("status");
+            if (params.has("status")) state.filters.status = params.get("status").split(",");
             if (params.has("months")) state.filters.month = params.get("months").split(",");
             if (params.has("pm")) state.selection.pm = params.get("pm");
             if (params.has("product")) state.selection.product = params.get("product");
@@ -4754,14 +4776,12 @@ th.sortable.abs span {
                 const searchInput = document.getElementById("assemblySearch");
                 if (searchInput) searchInput.value = state.searchQuery;
             }
-            if (state.filters.status) {
-                const statusSelect = document.getElementById("filter-status");
-                if (statusSelect) statusSelect.value = state.filters.status;
-            }
             if (state.viewMode) {
                 const viewModeSelect = document.getElementById("lineChartViewMode");
                 if (viewModeSelect) viewModeSelect.value = state.viewMode;
             }
+            
+            updateStatusBtnText();
             updateMonthBtnText();
         }
 
@@ -4799,6 +4819,10 @@ th.sortable.abs span {
                 const revBtnText = document.getElementById("revenue-button-text");
                 const lastYear = state.lastRevenueYear || "actuals-2627";
                 if (revBtnText) revBtnText.innerText = lastYear === "actuals-2526" ? "REVENUE (2025-26)" : "REVENUE (2026-27)";
+
+                // Show quick filter buttons in forecast mode
+                const qfDiv = document.getElementById("tableQuickFilters");
+                if (qfDiv) qfDiv.style.display = "flex";
             } else {
                 if (document.getElementById('pmConfigBtn')) document.getElementById('pmConfigBtn').style.display = 'flex';
                 statusContainer.style.display = "none";
@@ -4831,8 +4855,17 @@ th.sortable.abs span {
                     }
                 }
 
-                state.filters.status = null;
-                document.getElementById("filter-status").value = "all";
+                state.filters.status = [];
+                const statusBtnText = document.getElementById("statusBtnText");
+                if (statusBtnText) {
+                    statusBtnText.innerText = "All Statuses";
+                }
+
+                // Hide quick filter buttons in revenue mode and reset active state
+                activeQuickFilter = null;
+                if (typeof syncQuickFilterButtons === 'function') syncQuickFilterButtons();
+                const qfDiv = document.getElementById("tableQuickFilters");
+                if (qfDiv) qfDiv.style.display = "none";
             }
 
             // --- GRID LAYOUT ---
@@ -5027,7 +5060,80 @@ th.sortable.abs span {
             updateDashboard();
         }
 
+        // Quick-filter state: which button is currently active
+        let activeQuickFilter = null;
+
+        function applyTableQuickFilter(filterKey) {
+            // Toggle off if same button clicked again
+            if (activeQuickFilter === filterKey) {
+                activeQuickFilter = null;
+                state.filters.status = [];
+            } else {
+                activeQuickFilter = filterKey;
+                switch (filterKey) {
+                    case 'bought-out':
+                        state.filters.status = ['Bought Out'];
+                        break;
+                    case 'in-house':
+                        state.filters.status = ['In House'];
+                        break;
+                    case 'dispatched':
+                        state.filters.status = ['Dispatched'];
+                        break;
+                    case 'not-dispatched':
+                        state.filters.status = ['Not Dispatched'];
+                        break;
+                    case 'bo-disp':
+                        state.filters.status = ['Bought Out', 'Dispatched'];
+                        break;
+                    default:
+                        state.filters.status = [];
+                }
+            }
+            // Also sync the dropdown checkboxes
+            document.querySelectorAll('#statusDropdownList input').forEach(cb => {
+                cb.checked = state.filters.status.includes(cb.dataset.value || cb.value);
+            });
+            updateStatusBtnText();
+            syncQuickFilterButtons();
+            updateDashboard();
+        }
+
+        function syncQuickFilterButtons() {
+            const colorMap = {
+                'qf-bought-out':    { active: 'border-blue-500 bg-blue-50 text-blue-700',   inactive: 'border-gray-300 text-gray-500 bg-white' },
+                'qf-in-house':      { active: 'border-orange-500 bg-orange-50 text-orange-700', inactive: 'border-gray-300 text-gray-500 bg-white' },
+                'qf-dispatched':    { active: 'border-green-500 bg-green-50 text-green-700',  inactive: 'border-gray-300 text-gray-500 bg-white' },
+                'qf-not-dispatched':{ active: 'border-gray-500 bg-gray-100 text-gray-700',    inactive: 'border-gray-300 text-gray-500 bg-white' },
+                'qf-bo-disp':       { active: 'border-blue-500 bg-blue-50 text-blue-700',     inactive: 'border-gray-300 text-gray-500 bg-white' },
+            };
+            const keyToId = {
+                'bought-out': 'qf-bought-out',
+                'in-house': 'qf-in-house',
+                'dispatched': 'qf-dispatched',
+                'not-dispatched': 'qf-not-dispatched',
+                'bo-disp': 'qf-bo-disp',
+            };
+            Object.entries(colorMap).forEach(([id, cls]) => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                const isActive = activeQuickFilter && keyToId[activeQuickFilter] === id;
+                // Remove all possible classes first
+                btn.className = btn.className
+                    .replace(/border-\w+-\d+/g, '')
+                    .replace(/bg-\w+-\d+/g, '')
+                    .replace(/text-\w+-\d+/g, '')
+                    .replace(/bg-white/g, '')
+                    .trim();
+                const toAdd = isActive ? cls.active : cls.inactive;
+                toAdd.split(' ').forEach(c => btn.classList.add(c));
+                if (!isActive) btn.classList.add('bg-white');
+            });
+        }
+
         function resetAllFilters() {
+            activeQuickFilter = null;
+            syncQuickFilterButtons();
             state.filters = { month: [], status: [] };
             state.selection = { pm: null, product: null, month: null };
             state.searchQuery = "";
@@ -5445,6 +5551,33 @@ th.sortable.abs span {
 
             if (data.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">No projects match filters</td></tr>`;
+                
+                // Clear KPIs
+                const kpiRevEl = document.getElementById("kpi-revenue");
+                const kpiAsmEl = document.getElementById("kpi-assemblies");
+                const kpiAvgEl = document.getElementById("kpi-avg");
+                const kpiProjEl = document.getElementById("kpi-projects");
+                if (kpiRevEl) kpiRevEl.innerText = "₹ 0.00 Cr";
+                if (kpiAsmEl) kpiAsmEl.innerText = "0";
+                if (kpiAvgEl) kpiAvgEl.innerText = "₹ 0.00 Cr";
+                if (kpiProjEl) kpiProjEl.innerText = "0";
+
+                // Clear Charts
+                if (charts.bar) {
+                    charts.bar.data.labels = [];
+                    charts.bar.data.datasets = [{ data: [] }];
+                    charts.bar.update();
+                }
+                if (charts.pie) {
+                    charts.pie.data.labels = [];
+                    charts.pie.data.datasets = [{ data: [] }];
+                    charts.pie.update();
+                }
+                if (charts.line) {
+                    charts.line.data.labels = [];
+                    charts.line.data.datasets = [{ data: [] }];
+                    charts.line.update();
+                }
                 return;
             }
 
@@ -5569,32 +5702,39 @@ th.sortable.abs span {
                         .map((i) => {
                             let bgStyle = "";
                             let badgeClasses = "px-3 py-1 rounded-full text-xs font-bold inline-block ";
+                            const isForecast = state.context === "forecast";
 
-                            if (i.status === "Dispatched") {
-                                if (i.source === "Bought Out") {
-                                    bgStyle = "background: linear-gradient(135deg, #3b82f6 50%, #22c55e 50%); color: white;";
-                                } else if (i.source === "In House") {
-                                    bgStyle = "background: linear-gradient(135deg, #f97316 50%, #22c55e 50%); color: white;";
+                            if (isForecast) {
+                                if (i.status === "Dispatched") {
+                                    if (i.source === "Bought Out") {
+                                        bgStyle = "background: linear-gradient(135deg, #3b82f6 50%, #22c55e 50%); color: white;";
+                                    } else if (i.source === "In House") {
+                                        bgStyle = "background: linear-gradient(135deg, #f97316 50%, #22c55e 50%); color: white;";
+                                    } else {
+                                        bgStyle = "background-color: #22c55e; color: white;";
+                                    }
                                 } else {
-                                    bgStyle = "background-color: #22c55e; color: white;";
+                                    if (i.source === "Bought Out") {
+                                        bgStyle = "background-color: #3b82f6; color: white;";
+                                    } else if (i.source === "In House") {
+                                        bgStyle = "background-color: #f97316; color: white;";
+                                    } else {
+                                        bgStyle = "background-color: transparent; color: #6b7280;";
+                                    }
                                 }
                             } else {
-                                if (i.source === "Bought Out") {
-                                    bgStyle = "background-color: #3b82f6; color: white;";
-                                } else if (i.source === "In House") {
-                                    bgStyle = "background-color: #f97316; color: white;";
-                                } else {
-                                    bgStyle = "background-color: transparent; color: #6b7280;";
-                                }
+                                // Revenue tab: no source/dispatch coloring
+                                bgStyle = "background-color: #f3f4f6; color: #374151;";
                             }
 
                             const statusBadge = `<span class="${badgeClasses}" style="${bgStyle}">${i.month} ${i.year}</span>`;
 
                             return `<div class="row d-flex flex justify-between items-center py-2 border-b border-gray-200 last:border-0 text-sm hover:bg-white transition-colors">
-<span class="col-4 text-gray-600 pl-4 border-l-2 ${i.status === "Dispatched"
-                                    ? "border-green-500"
-                                    : "border-red-300"
-                                }">
+<span class="col-4 text-gray-600 pl-4 border-l-2 ${
+                                isForecast
+                                    ? (i.status === "Dispatched" ? "border-green-500" : "border-red-300")
+                                    : "border-gray-300"
+                            }">
 
                 ${i.assembly || "–"}
 </span>
@@ -5878,6 +6018,9 @@ th.sortable.abs span {
                 }
                 state.filters.status.push(status);
             }
+            // Deactivate quick filter buttons since user changed via dropdown
+            activeQuickFilter = null;
+            syncQuickFilterButtons();
             updateStatusBtnText();
             updateDashboard();
         }
