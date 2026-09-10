@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 
 <head>
@@ -1180,7 +1180,7 @@ th.sortable.abs span {
         </div>
     </main>
 
-    </div>
+
     <img id="pdfLogo" src="assets/img/YDLOGO.png" style="display: none" />
 
     <footer id="footer" class="footer position-relative light-background">
@@ -1326,6 +1326,7 @@ th.sortable.abs span {
             sort: { key: "billing", direction: "desc" },
             assemblySort: "default",
             dynamicPMMapping: {},
+            dynamicProjectNameMapping: {},
         };
 
         const charts = {};
@@ -1734,16 +1735,11 @@ th.sortable.abs span {
 
                     const dbExcel = await res.json();
 
-                    const now = new Date();
-                    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                    let fyEndYear = now.getMonth() <= 2 ? now.getFullYear() : now.getFullYear() + 1;
-                    const fiscalEndDate = new Date(fyEndYear, 2, 31, 23, 59, 59);
-
-                    rawData = (dbExcel.data || []).filter(item => {
-                        if (!item.dispatchMonth) return false;
-                        const d = new Date(item.dispatchMonth);
-                        return !isNaN(d) && d >= startOfCurrentMonth && d <= fiscalEndDate;
-                    });
+                    // The backend's isInCurrentFiscalWindow() already filters
+                    // to the correct fiscal window.  Do NOT duplicate that
+                    // business rule here — it creates a second source of truth
+                    // and can silently drop rows if server/client clocks differ.
+                    rawData = dbExcel.data || [];
                     fiscalYear = dbExcel.fiscalYear || fiscalYear;
                     lastUpdated = dbExcel.lastUpdated || lastUpdated;
                     document.getElementById("excelUpdateTimeDiv").style.display =
@@ -1803,19 +1799,9 @@ th.sortable.abs span {
                     const pad = (n) => String(n).padStart(2, "0");
                     return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
                 };
-                // Sanitize project codes for SAP data before populating database
-                if (state.context.startsWith("actuals")) {
-                    rawData.forEach(item => {
-                        const wbsCode = String(item.WBSElementExternalID || item.wbs || item.WBS || "").trim();
-                        let proj = String(item.project || "").trim();
-
-                        if (wbsCode.length >= 4 && /^\d{4}$/.test(wbsCode.substring(0, 4))) {
-                            item.project = wbsCode.substring(0, 4);
-                        } else if (/^\d{4}/.test(proj)) {
-                            item.project = proj.substring(0, 4);
-                        }
-                    });
-                }
+                // Project-code extraction for SAP data is handled below
+                // inside the database[] mapping — NOT by mutating rawData,
+                // which would corrupt the source objects across re-renders.
 
                 // Populate global database
                 database = rawData.map((item, index) => {
@@ -1853,12 +1839,23 @@ th.sortable.abs span {
 
                     const wbsCode = item.WBSElementExternalID || item.wbs || item.WBS || "";
 
+                    // For SAP actuals, derive a 4-digit project code from
+                    // WBS or project without mutating the original item.
+                    let resolvedProject = String(item.project || "").trim();
+                    if (state.context.startsWith("actuals")) {
+                        if (wbsCode.length >= 4 && /^\d{4}$/.test(wbsCode.substring(0, 4))) {
+                            resolvedProject = wbsCode.substring(0, 4);
+                        } else if (/^\d{4}/.test(resolvedProject)) {
+                            resolvedProject = resolvedProject.substring(0, 4);
+                        }
+                    }
+
                     return {
                         id: index + 1,
-                        name: getProjectName(item.project),
-                        pm: getPMName(item.project, wbsCode) || item.pm,
+                        name: getProjectName(resolvedProject),
+                        pm: getPMName(resolvedProject, wbsCode) || item.pm,
                         wbs: wbsCode,
-                        product: getLineName(item.project) || item.category,
+                        product: getLineName(resolvedProject) || item.category,
                         month: item.month ? item.month.trim() : "",
                         status: status,
                         source: source,
@@ -2192,7 +2189,11 @@ th.sortable.abs span {
         }
 
         function applySlicer(type, value) {
-            state.filters[type] = value === "all" ? null : value;
+            if (value === "all") {
+                state.filters[type] = Array.isArray(state.filters[type]) ? [] : null;
+            } else {
+                state.filters[type] = value;
+            }
             state.selection = { pm: null, product: null, month: null };
             updateDashboard();
         }
@@ -2971,7 +2972,8 @@ th.sortable.abs span {
 
             const baseM = cleanM.replace(/[^a-zA-Z]/g, "");
             let displayM = baseM;
-            if (displayM === "Sep") displayM = "Sept";
+            // Keep 3-letter abbreviation "Sep" — the backend's shortMonth()
+            // explicitly avoids "Sept" for sorting/filter consistency.
 
             const isNextYear = ["Jan", "Feb", "Mar"].includes(baseM);
             const yr = isNextYear ? startYear + 1 : startYear;
