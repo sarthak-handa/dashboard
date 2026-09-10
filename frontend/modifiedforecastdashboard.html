@@ -1,4 +1,1317 @@
+﻿<!doctype html>
+<html lang="en">
 
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>YD PROJECTS</title>
+    <link href="assets/img/yd-favicon.png" rel="icon" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        /**
+* Template Name: Scout
+* Template URL: https://bootstrapmade.com/scout-bootstrap-multipurpose-template/
+* Updated: May 05 2025 with Bootstrap v5.3.5
+* Author: BootstrapMade.com
+* License: https://bootstrapmade.com/license/
+*/
+
+        /*--------------------------------------------------------------
+# Font & Color Variables
+# Help: https://bootstrapmade.com/color-system/
+--------------------------------------------------------------*/
+        /* Fonts */
+        :root {
+            --default-font:
+                "Roboto", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+                Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji",
+                "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            --heading-font: "Raleway", sans-serif;
+            --nav-font: "Montserrat", sans-serif;
+        }
+
+        /* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
+        :root {
+            --background-color: #ffffff;
+            /* Background color for the entire website, including individual sections */
+            --default-color: #52413a;
+            /* Default color used for the majority of the text content across the entire website */
+            --heading-color: #31221c;
+            /* Color for headings, subheadings and title throughout the website */
+            --accent-color: #2a5071;
+            /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
+            --surface-color: #ffffff;
+            /* The surface color is used as a background of boxed elements within sections, such as cards, icon boxes, or other elements that require a visual separation from the global background. */
+            --contrast-color: #ffffff;
+            /* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
+        }
+
+        /* Nav Menu Colors - The following color variables are used specifically for the navigation menu. They are separate from the global colors to allow for more customization options */
+        :root {
+            --nav-color: #52413a;
+            /* The default color of the main navmenu links */
+            --nav-hover-color: #f85d23;
+            /* Applied to main navmenu links when they are hovered over or active */
+            --nav-mobile-background-color: #ffffff;
+            /* Used as the background color for mobile navigation menu */
+            --nav-dropdown-background-color: #ffffff;
+            /* Used as the background color for dropdown items that appear when hovering over primary navigation items */
+            --nav-dropdown-color: #52413a;
+            /* Used for navigation links of the dropdown items in the navigation menu. */
+            --nav-dropdown-hover-color: #f85d23;
+            /* Similar to --nav-hover-color, this color is applied to dropdown navigation links when they are hovered over. */
+        }
+
+        /* Color Presets - These classes override global colors when applied to any section or element, providing reuse of the sam color scheme. */
+
+        .light-background {
+            --background-color: #f8f5f4;
+            --surface-color: #ffffff;
+        }
+
+        .dark-background {
+            --background-color: #060606;
+            --default-color: #ffffff;
+            --heading-color: #ffffff;
+            --surface-color: #343333;
+            --contrast-color: #ffffff;
+        }
+
+        /* Smooth scroll */
+        :root {
+            scroll-behavior: smooth;
+        }
+
+        /*--------------------------------------------------------------
+# General Styling & Shared Classes
+--------------------------------------------------------------*/
+        body {
+            color: var(--default-color);
+            background-color: var(--background-color);
+            font-family: var(--default-font);
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        a:hover {
+            color: color-mix(in srgb, var(--accent-color), transparent 25%);
+            text-decoration: none;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            color: var(--heading-color);
+            font-family: var(--heading-font);
+        }
+
+        /*--------------------------------------------------------------
+# Global Header
+--------------------------------------------------------------*/
+        .header {
+            color: var(--default-color);
+            background-color: var(--background-color);
+            padding: 15px 0;
+            transition: all 0.5s;
+            z-index: 997;
+        }
+
+        .header .logo {
+            line-height: 1;
+        }
+
+        .header .logo img {
+            max-height: 60px;
+            /* margin-right: 8px; */
+        }
+
+        .header .logo h1 {
+            font-size: 26px;
+            margin: 0;
+            font-weight: 600;
+            color: var(--heading-color);
+        }
+
+        .header .btn-getstarted,
+        .header .btn-getstarted:focus {
+            color: var(--contrast-color);
+            background: var(--accent-color);
+            font-size: 14px;
+            padding: 8px 25px;
+            margin: 0 0 0 30px;
+            border-radius: 50px;
+            transition: 0.3s;
+        }
+
+        .header .btn-getstarted:hover,
+        .header .btn-getstarted:focus:hover {
+            color: var(--contrast-color);
+            background: color-mix(in srgb, var(--accent-color), transparent 15%);
+        }
+
+        @media (max-width: 1200px) {
+            /* .header .logo {
+    order: 1;
+  } */
+
+            .header .btn-getstarted {
+                order: 2;
+                margin: 0 15px 0 0;
+                padding: 6px 15px;
+            }
+
+            .header .navmenu {
+                order: 3;
+            }
+        }
+
+        /* Global Header on Scroll
+------------------------------*/
+        /* .scrolled .header {
+  --background-color: rgba(244, 239, 237, 0.95);
+} */
+
+        /*--------------------------------------------------------------
+# Global Footer
+--------------------------------------------------------------*/
+        .footer {
+            color: var(--default-color);
+            background-color: var(--background-color);
+            font-size: 14px;
+            position: relative;
+        }
+
+        .footer .footer-top {
+            padding-top: 50px;
+        }
+
+        .footer .footer-about .logo {
+            line-height: 1;
+            margin-bottom: 25px;
+        }
+
+        /* .footer .footer-about .logo img {
+  max-height: 40px;
+  margin-right: 6px;
+} */
+
+        .footer .footer-about .logo span {
+            color: var(--heading-color);
+            font-family: var(--heading-font);
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .footer .footer-about p {
+            font-size: 14px;
+            font-family: var(--heading-font);
+        }
+
+        .footer .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid color-mix(in srgb, var(--default-color), transparent 50%);
+            font-size: 16px;
+            color: color-mix(in srgb, var(--default-color), transparent 20%);
+            margin-right: 10px;
+            transition: 0.3s;
+        }
+
+        .footer .social-links a:hover {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .footer h4 {
+            font-size: 16px;
+            font-weight: bold;
+            position: relative;
+            padding-bottom: 12px;
+        }
+
+        .footer .footer-links {
+            margin-bottom: 30px;
+        }
+
+        .footer .footer-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer .footer-links ul i {
+            padding-right: 2px;
+            font-size: 12px;
+            line-height: 0;
+        }
+
+        .footer .footer-links ul li {
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .footer .footer-links ul li:first-child {
+            padding-top: 0;
+        }
+
+        .footer .footer-links ul a {
+            color: color-mix(in srgb, var(--default-color), transparent 30%);
+            display: inline-block;
+            line-height: 1;
+        }
+
+        .footer .footer-links ul a:hover {
+            color: var(--accent-color);
+        }
+
+        .footer .footer-contact p {
+            margin-bottom: 5px;
+        }
+
+        .footer .copyright {
+            /* padding: 25px 0; */
+            border-top: 1px solid color-mix(in srgb, var(--default-color), transparent 90%);
+        }
+
+        .footer .copyright p {
+            margin-bottom: 0;
+        }
+
+        .footer .credits {
+            margin-top: 8px;
+            font-size: 13px;
+        }
+
+        /* Cancels the inline padding-left on the footer columns on phones. */
+        @media (max-width: 768px) {
+            .footer-right {
+                padding-left: 10px !important;
+            }
+        }
+
+        /*--------------------------------------------------------------
+# Disable aos animation delay on mobile devices
+--------------------------------------------------------------*/
+        @media screen and (max-width: 768px) {
+            [data-aos-delay] {
+                transition-delay: 0 !important;
+            }
+        }
+
+
+        #hero {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-image: url("../img/yd_bg.jpg");
+            height: 1200px;
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+        }
+
+        main {
+            margin-top: 170px;
+            margin-bottom: 100px;
+        }
+
+        /* Show dropdown on hover */
+        .dropdown:hover .dropdown-menu {
+            display: block;
+            margin-top: 0;
+            /* removes the small gap */
+        }
+
+        .dropdown-item:active {
+            color: var(--bs-dropdown-link-active-color);
+            text-decoration: none;
+            background-color: #ad283f;
+        }
+
+        .page-link {
+            z-index: 3;
+            color: var(--bs-pagination-active-color);
+            background-color: #215071 !important;
+            border-color: #215071 !important;
+        }
+
+        .table-dark {
+            --bs-table-bg: #2a5071 !important;
+        }
+
+        .btn-info {
+            --bs-btn-color: #ffffff;
+            --bs-btn-bg: #001fff;
+            --bs-btn-border-color: #001fff;
+            --bs-btn-hover-color: #ffffff;
+            --bs-btn-hover-bg: #0219c0;
+            --bs-btn-hover-border-color: #0219c0;
+        }
+
+        .pagination {
+            --bs-pagination-disabled-color: #ffffff !important;
+        }
+
+        .btn-warning {
+            --bs-btn-color: white;
+            --bs-btn-bg: #0219c0;
+            --bs-btn-border-color: #0219c0;
+            --bs-btn-hover-color: white;
+            --bs-btn-hover-bg: #001083;
+            --bs-btn-hover-border-color: #001083;
+        }
+
+        .custom-label {
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            color: #2a5071 !important;
+        }
+
+        .mom-sheet {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .mom-sheet b {
+            font-size: 14px;
+        }
+
+        .mom-sheet ol {
+            padding-left: 20px;
+        }
+
+        /* th.sortable.abs {
+  position: relative;
+  cursor: pointer;
+  padding-right: 18px;
+}
+th.sortable.abs span {
+  position: absolute;
+  right: 5px; 
+} */
+        .btn-primary {
+            --bs-btn-bg: #2a5071;
+            --bs-btn-border-color: #2a5071;
+            --bs-btn-hover-bg: #1b476d;
+            --bs-btn-hover-border-color: #1b476d;
+            --bs-btn-active-bg: #2a5071;
+            --bs-btn-active-border-color: #2a5071;
+        }
+
+        /* .sort-icons {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 13px;
+}
+
+.sort-icons .up,
+.sort-icons .down {
+  color: #cccccc67;
+  cursor: pointer;
+  display: block;
+  line-height: 0.752;
+  opacity: .6;
+}
+
+.sort-icons .active {
+  color: #ffffff;
+  opacity: .6;
+} */
+
+        th.sortable {
+            padding-right: 10px;
+            /* optional spacing */
+        }
+
+        .th-content {
+            display: flex;
+            justify-content: space-between;
+            /* text left, icons right */
+            align-items: center;
+            /* vertical alignment */
+            width: 100%;
+        }
+
+        .sort-icons {
+            display: flex;
+            flex-direction: column;
+            /* up and down stacked */
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .sort-icons .up,
+        .sort-icons .down {
+            color: #cccccc67;
+            /* default gray */
+            opacity: 0.6;
+            line-height: 0.752;
+        }
+
+        .sort-icons .active {
+            color: #ffffff;
+            /* highlight */
+            opacity: 0.6;
+        }
+
+        /* Make all tables responsive */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            /* smooth scrolling on iOS */
+        }
+
+        .table-responsive table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+            /* optional: ensures scroll appears if table is too wide */
+        }
+
+        /* SIDEBAR CSS */
+        /* .offcanvas-body .list-group-item a {
+  text-decoration: none;
+  color: #333;
+  display: block;
+}
+.offcanvas-body .list-group-item a:hover {
+  color: #0d6efd;
+} */
+
+        /* Zoom effect */
+        .zoomable {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            max-height: 120px;
+            /* adjust to your media preview size */
+            object-fit: cover;
+        }
+
+        .zoomable.zoomed {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(2);
+            /* scale 2x */
+            z-index: 1055;
+            /* above modal */
+            max-width: 90%;
+            max-height: 90%;
+            border: 5px solid #fff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            cursor: zoom-out;
+        }
+
+        /* Zoom overlay */
+        #zoomOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            /* semi-transparent background */
+            display: none;
+            /* hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            cursor: pointer;
+        }
+
+        /* White card for zoomed image */
+        #zoomOverlay .zoomCard {
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            max-width: 90%;
+            max-height: 90%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #zoomOverlay img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* .select2-container .select2-selection--single {
+  height: 38px !important;
+  display: flex;
+  align-items: center;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+}
+.select2-selection__arrow {
+  height: 36px !important;
+}
+.select2-selection__rendered {
+  line-height: 36px !important;
+  color: #495057 !important;
+} */
+        /* #projectSuggestions li {
+  cursor: pointer;
+}
+#projectSuggestions li:hover {
+  background-color: #f8f9fa;
+}
+.btn-user-blue {
+  background-color: #3a5286;
+  color: white !important;
+  border-radius: 50px;
+  padding: 5px 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  border: none;
+  text-decoration: none;
+}
+.btn-user-blue:hover {
+  background-color: #3a5286;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-menu-outline {
+  border: 1px solid #dee2e6;
+  color: #555;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  transition: all 0.2s;
+}
+.btn-menu-outline:hover {
+  background-color: #f8f9fa;
+  border-color: #c0c4c8;
+  color: #333;
+} */
+
+        /* --- GLOBAL FIXES --- */
+        html,
+        body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        /* User Profile Blue Button */
+        .btn-user-blue {
+            background-color: #2a5071;
+            color: white !important;
+            border-radius: 50px;
+            padding: 5px 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .btn-user-blue:hover,
+        .btn-user-blue:focus {
+            background-color: #2a5071;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+
+        /* Navigation Buttons (Common) */
+        .nav-btn-custom {
+            font-weight: 600;
+            padding: 8px 15px;
+            /* Reduced side padding slightly */
+            border-radius: 6px;
+            text-align: center;
+            text-decoration: none;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn-custom:active {
+            transform: scale(0.95);
+        }
+
+        /* Dropdown Logic */
+        .dropdown-item {
+            white-space: normal !important;
+            word-wrap: break-word;
+        }
+
+        .dropdown-menu {
+            max-width: 90vw;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .navbar-brand {
+            margin-right: 0;
+        }
+
+        .right-icons-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .custom-nav-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Small gap between buttons */
+
+        /* --- MOBILE STYLES (< 991px) --- */
+        @media (max-width: 991px) {
+            .right-icons-group {
+                order: 2;
+                margin-left: auto;
+            }
+
+            .custom-nav-container {
+                order: 3;
+                width: 100%;
+                flex-direction: row;
+                /* FORCE ROW LAYOUT */
+                justify-content: center;
+                /* Center the group */
+                margin-top: 15px;
+                padding: 0 10px;
+                /* Safe padding from screen edges */
+            }
+
+            .nav-btn-custom {
+                width: auto;
+                flex: 1;
+                /* Make buttons grow equally */
+                font-size: 0.85rem;
+                /* Slightly smaller text for fit */
+                padding: 8px 5px;
+                /* Compact padding */
+                max-width: 120px;
+                /* Prevent them from getting huge */
+            }
+
+            .dropdown-menu-end {
+                right: 0;
+                left: auto;
+            }
+        }
+
+        /* --- DESKTOP STYLES (> 992px) --- */
+        @media (min-width: 992px) {
+            .custom-nav-container {
+                order: 2;
+                flex-direction: row;
+                margin-left: auto;
+                margin-right: 15px;
+            }
+
+            .right-icons-group {
+                order: 3;
+                margin-left: 0;
+            }
+
+            .nav-btn-custom {
+                width: auto;
+                padding: 8px 20px;
+            }
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        /* --- LOADER CSS FIXED (New Spinner) --- */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.3s ease-out;
+        }
+
+        /* Simple, responsive CSS Spinner */
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            /* Light grey */
+            border-top: 5px solid #a81818;
+            /* Yogi Red Brand Color */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden-loader {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .userImg {
+            height: 20px !important;
+        }
+
+        :root {
+            --brand-red: #a81818;
+            --brand-pink: #fca5a5;
+            --brand-dark: #1f2937;
+        }
+
+        body {
+            background-color: #f3f4f6;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        .kpi-card {
+            transition:
+                transform 0.2s,
+                box-shadow 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .expand-row {
+            animation: slideDown 0.3s ease-out forwards;
+            transform-origin: top;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: scaleY(0);
+                max-height: 0;
+            }
+
+            to {
+                opacity: 1;
+                transform: scaleY(1);
+            }
+        }
+
+        .custom-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .danger-badge {
+            background-color: red;
+            color: white;
+            padding: 4px 8px;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .success-badge {
+            background-color: green;
+            color: white;
+            padding: 4px 8px;
+            text-align: center;
+            border-radius: 5px;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        yogi: { red: "#a81818", pink: "#fca5a5", dark: "#1f2937" },
+                    },
+                },
+            },
+        };
+    </script>
+</head>
+
+<body class="text-gray-800">
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <header id="header" class="header sticky-top" style="
+        background-color: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 10px 0;
+      ">
+        <nav class="navbar navbar-light">
+            <div class="container-fluid d-flex flex-wrap align-items-center">
+                <a class="navbar-brand" href="ourClients.html">
+                    <img src="assets/img/YDLOGO.png" alt="Logo" style="height: 45px" />
+                </a>
+
+                <div class="custom-nav-container">
+                    <a href="projectReport.html" class="nav-btn-custom" style="background: #fde2e4; color: #9f1239">
+                        Report
+                    </a>
+                    <a href="meetings.html" class="nav-btn-custom" style="background: #fff4cc; color: #92400e">
+                        Meeting
+                    </a>
+                    <a href="kickOff.html" class="nav-btn-custom" style="background: #baf1ac; color: #3f891b">YD Ascend
+                    </a>
+                </div>
+
+                <div class="right-icons-group">
+
+
+                    <div class="dropdown">
+                        <button class="btn-user-blue dropdown-toggle" type="button" id="userDropdown"
+                            data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
+                            <img src="assets/img/user.png" height="20px" style="filter: brightness(0) invert(1)"
+                                alt="User" />
+                            <span id="engineerNameDisplay" class="d-none d-sm-inline">User</span>
+                        </button>
+
+                        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+                            <li>
+                                <a class="dropdown-item" href="changePassword.html">Change Password</a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider" />
+                            </li>
+                            <li>
+                                <a class="dropdown-item text-danger" onclick="logout()">Logout</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="px-4 sm:px-6 lg:px-8 py-6" style="margin: 0px">
+        <div class="flex flex-col xl:flex-row justify-between items-start xl:items-end mb-6 gap-4">
+            <div>
+                <div class="mb-2">
+                    <h1 class="text-3xl font-bold text-gray-900 uppercase" style="color: #a81818">
+                        Sales & Cash Flow <span id="fy"></span>
+                        <span id="monthRange" class="text-xl text-gray-600 ml-1"></span>
+                    </h1>
+
+                    <a id="excelUpdateTimeDiv"
+                        href="https://ydgrouppl.sharepoint.com/:x:/s/SalesForecast/IQAqwJw0nEVdSJiebL0rGJ4uAa6Rwn6fMdHM6r_g_PRJVuM?wdOrigin=TEAMS-MAGLEV.p2p_ns.rwc&wdExp=TEAMS-TREATMENT&wdhostclicktime=1769663415121&web=1"
+                        target="_blank"><small id="excelUpdateTime"></small></a>
+                    <a id="excelUpdateTimeDiv2" style="display: none"
+                        href="https://ydgrouppl.sharepoint.com/:x:/s/SalesForecast/IQA8foYHguqjRJP0QhZ3HO-lAUwt2jC8tpiatYX1uld0gpk?wdOrigin=TEAMS-MAGLEV.p2p_ns.rwc&wdExp=TEAMS-TREATMENT&wdhostclicktime=1769664603609&web=1"
+                        target="_blank"><small id="excelUpdateTime2"></small></a>
+                </div>
+                <div class="flex bg-gray-100 p-1 rounded-lg">
+                    <button id="toggle-forecast" onclick="switchDataContext('forecast')"
+                        class="px-4 py-2 text-sm font-bold rounded-md transition-all duration-200 bg-yogi-red text-white shadow-sm">
+                        FORECAST
+                    </button>
+                    <div class="relative inline-block text-left" id="revenue-dropdown-container">
+                        <button id="toggle-revenue" onclick="handleRevenueButtonClick(event)"
+                            class="px-4 py-2 text-sm font-bold rounded-md transition-all duration-300 text-gray-500 hover:text-gray-800 flex items-center gap-1.5">
+                            <span id="revenue-button-text">REVENUE (2026-27)</span>
+                            <i class="fa-solid fa-chevron-down text-xs transition-transform" id="revenue-chevron"></i>
+                        </button>
+                        <div id="revenue-dropdown-menu"
+                            class="hidden absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white border border-gray-200 z-50 py-1">
+                            <button onclick="selectRevenueYear('actuals-2627')"
+                                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-100 flex items-center justify-between">
+                                <span>2026-27 (FY 26-27)</span>
+                                <i id="check-actuals-2627" class="fa-solid fa-check text-yogi-red hidden"></i>
+                            </button>
+                            <button onclick="selectRevenueYear('actuals-2526')"
+                                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-100 flex items-center justify-between">
+                                <span>2025-26 (FY 25-26)</span>
+                                <i id="check-actuals-2526" class="fa-solid fa-check text-yogi-red hidden"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="flex flex-wrap gap-3 w-full xl:w-auto justify-end bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                <div class="flex flex-col relative" id="dispatch-status-container">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">All Statuses</label>
+                    <button id="statusDropdownBtn" onclick="toggleStatusDropdown()"
+                        class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-md focus:ring-yogi-red focus:border-yogi-red block w-40 p-2 text-left flex justify-between items-center">
+                        <span id="statusBtnText" class="truncate w-11/12">All Statuses</span>
+                        <i class="fa-solid fa-chevron-down text-xs text-gray-500"></i>
+                    </button>
+                    <div id="statusDropdownList"
+                        class="hidden absolute top-[60px] z-50 w-48 bg-white shadow-lg border border-gray-200 rounded-md max-h-60 overflow-y-auto">
+                    </div>
+                </div>
+
+                <div class="flex flex-col" id="view-mode-container">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">View Mode</label>
+                    <select id="lineChartViewMode" onchange="toggleViewMode(this.value)"
+                        class="custom-select bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-md focus:ring-yogi-red focus:border-yogi-red block w-40 p-2">
+                        <option value="monthly">Monthly View</option>
+                        <option value="quarterly">Quarterly View</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-col relative">
+                    <label id="dispatchMonthLabel" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Dispatch
+                        Month</label>
+                    <button id="monthDropdownBtn" onclick="toggleMonthDropdown()"
+                        class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-md focus:ring-yogi-red focus:border-yogi-red block w-40 p-2 text-left flex justify-between items-center">
+                        <span id="monthBtnText">All Months</span>
+                        <i class="fa-solid fa-chevron-down text-xs text-gray-500"></i>
+                    </button>
+                    <div id="monthDropdownList"
+                        class="hidden absolute top-[60px] z-50 w-48 bg-white shadow-lg border border-gray-200 rounded-md max-h-60 overflow-y-auto">
+                    </div>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="resetAllFilters()"
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-md text-sm font-medium transition h-[38px] flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Reset
+                    </button>
+                </div>
+                <div class="flex items-end gap-2">
+                    <button id="pmConfigBtn" onclick="openPmConfigModal()"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-md text-sm font-medium transition h-[38px] flex items-center gap-2 shadow-sm"
+                        style="display: none;" title="Project Manager Config">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                    <button onclick="generateRankedMonthPDF()"
+                        class="bg-yogi-red hover:bg-red-800 text-white px-4 py-2 rounded-md text-sm font-medium transition h-[38px] flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-file-pdf"></i> Export Report
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="kpi-card bg-white p-5 rounded-lg border-l-4 border-yogi-red shadow-sm">
+                <p class="text-xs font-bold text-gray-400 uppercase">PROJECTS</p>
+                <h3 id="kpi-projects" class="text-2xl font-bold text-gray-900 mt-1">
+                    0
+                </h3>
+            </div>
+            <div class="kpi-card bg-white p-5 rounded-lg border-l-4 border-yogi-red shadow-sm" id="billingHead">
+                <p class="text-xs font-bold text-gray-400 uppercase">
+                    FORECASTED BILLING VALUE
+                </p>
+                <h3 id="kpi-revenue" class="text-2xl font-bold text-gray-900 mt-1">
+                    0
+                </h3>
+            </div>
+            <div class="kpi-card bg-white p-5 rounded-lg border-l-4 border-yogi-red shadow-sm" id="assemblyHead">
+                <p class="text-xs font-bold text-gray-400 uppercase">
+                    ASSEMBLIES TO BE DISPATCHED
+                </p>
+                <h3 id="kpi-assemblies" class="text-2xl font-bold text-gray-900 mt-1">
+                    0
+                </h3>
+            </div>
+            <div class="kpi-card bg-white p-5 rounded-lg border-l-4 border-yogi-red shadow-sm" id="avgMonthlyHead">
+                <p class="text-xs font-bold text-gray-400 uppercase">
+                    FORECASTED AVG MONTHLY BILLING
+                </p>
+                <h3 id="kpi-avg" class="text-2xl font-bold text-gray-900 mt-1">0</h3>
+            </div>
+        </div>
+        <div id="active-filters-container" class="flex gap-2 mb-4 hidden"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+            <div class="bg-white p-4 rounded-lg shadow-sm lg:col-span-4 border border-gray-100" id="col-bar">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-sm font-bold text-gray-800">
+                        FORECASTED BILLING ALLOCATION
+                    </h3>
+                </div>
+                <div class="h-60 relative w-full">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm lg:col-span-4 border border-gray-100" id="col-pie">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-sm font-bold text-gray-800">
+                        FORECASTED BILLING BY PRODUCTION LINE
+                    </h3>
+                </div>
+                <div class="h-60 relative w-full flex justify-center">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm lg:col-span-4 border border-gray-100" id="col-line">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-sm font-bold text-gray-800">
+                        FORECASTED MONTHLY BILLING
+                    </h3>
+                </div>
+                <div class="h-60 relative w-full">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div
+                class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <h3 class="font-bold text-gray-800">Detailed Assemblies Value</h3>
+                    <div id="tableQuickFilters" class="flex flex-wrap items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase">
+                        <button onclick="applyTableQuickFilter('bought-out')" id="qf-bought-out"
+                            class="quick-filter-btn flex items-center gap-1 px-2 py-1 rounded-full border border-gray-300 text-gray-500 bg-white hover:border-blue-400 hover:text-blue-600 transition-all duration-150 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: #3b82f6;"></span> Bought Out
+                        </button>
+                        <button onclick="applyTableQuickFilter('in-house')" id="qf-in-house"
+                            class="quick-filter-btn flex items-center gap-1 px-2 py-1 rounded-full border border-gray-300 text-gray-500 bg-white hover:border-orange-400 hover:text-orange-600 transition-all duration-150 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: #f97316;"></span> In House
+                        </button>
+                        <button onclick="applyTableQuickFilter('dispatched')" id="qf-dispatched"
+                            class="quick-filter-btn flex items-center gap-1 px-2 py-1 rounded-full border border-gray-300 text-gray-500 bg-white hover:border-green-400 hover:text-green-600 transition-all duration-150 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: #22c55e;"></span> Dispatched
+                        </button>
+                        <button onclick="applyTableQuickFilter('not-dispatched')" id="qf-not-dispatched"
+                            class="quick-filter-btn flex items-center gap-1 px-2 py-1 rounded-full border border-gray-300 text-gray-500 bg-white hover:border-gray-400 hover:text-gray-700 transition-all duration-150 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-gray-400 bg-white"></span> Not Dispatched
+                        </button>
+                        <button onclick="applyTableQuickFilter('bo-disp')" id="qf-bo-disp"
+                            class="quick-filter-btn flex items-center gap-1 px-2 py-1 rounded-full border border-gray-300 text-gray-500 bg-white hover:border-blue-400 hover:text-blue-600 transition-all duration-150 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background: linear-gradient(135deg, #3b82f6 50%, #22c55e 50%);"></span> BO+Disp
+                        </button>
+                    </div>
+                
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="forecastSearchContainer" class="relative">
+                        <input type="text" id="assemblySearch" oninput="handleSearch(this.value)"
+                            placeholder="Search projects or assemblies..."
+                            class="border border-gray-300 rounded-md pl-8 pr-3 py-1.5 text-sm focus:ring-yogi-red focus:border-yogi-red w-64 shadow-sm" />
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
+                    </div>
+
+                    <span id="table-count"
+                        class="text-xs font-semibold text-yogi-red bg-red-50 px-2 py-1 rounded whitespace-nowrap">Loading...</span>
+                </div>
+            </div>
+            <div class="overflow-x-auto custom-scroll">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-100 text-xs uppercase text-gray-500 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-3 border-b border-gray-200 w-12"></th>
+                            <th class="px-6 py-3 border-b border-gray-200">Project Name</th>
+                            <th class="px-6 py-3 border-b border-gray-200">Manager</th>
+                            <th class="px-6 py-3 border-b border-gray-200 text-right cursor-pointer select-none"
+                                onclick="toggleBillingSort()">
+                                Billing (₹)
+                                <span id="billingSortIcon" class="ml-1 text-xs">▼</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    </div>
+    <img id="pdfLogo" src="assets/img/YDLOGO.png" style="display: none" />
+
+    <footer id="footer" class="footer position-relative light-background">
+        <div class="container-fluid footer-top">
+            <div class="row gy-4" style="padding-left: 50px">
+                <div class="col-lg-3 col-md-3 footer-about">
+                    <a href="ourClients.html" class="logo d-flex align-items-center"><img height="100"
+                            src="assets/img/yd-footer.png" /></a>
+                </div>
+                <div class="col-lg-3 col-md-3 footer-links">
+                    <h4>Products</h4>
+                    <ul>
+                        <li>
+                            <a target="_blank" href="https://www.ydgroup.com/products/cold-rolling-mills/">Cold Rolling
+                                Mills</a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="https://www.ydgroup.com/products/gi-gl-lines/">GI/GL Lines</a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="https://www.ydgroup.com/products/color-coating-lines/">Color
+                                Coating lines</a>
+                        </li>
+                        <li>
+                            <a target="_blank"
+                                href="https://www.ydgroup.com/products/pickling-lines-acid-regeneration-plants/">Pickling
+                                Lines & Acid Regeneration</a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="https://www.ydgroup.com/products/narrow-hot-strip-mills/">Narrow
+                                Hot Strip Mills</a>
+                        </li>
+                        <li>
+                            <a target="_blank"
+                                href="https://www.ydgroup.com/products/slitting-cut-to-length-lines/">Slitting & Cut to
+                                Length</a>
+                        </li>
+                        <li>
+                            <a target="_blank"
+                                href="https://www.ydgroup.com/products/automatic-gauge-control/">Automatic Gauge
+                                Control</a>
+                        </li>
+                        <li>
+                            <a target="_blank"
+                                href="https://www.ydgroup.com/products/electrical-industrial-automation-solutions/">Electrical
+                                & Automation</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-3 footer-links footer-right" style="padding-left: 90px">
+                    <h4>Information</h4>
+                    <ul>
+                        <li>
+                            <a target="_blank" href="https://www.ydgroup.com/company-profile/">Company Profile</a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="https://www.ydgroup.com/infrastructure/">Infrastructure</a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="https://www.ydgroup.com/products/">Products</a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="https://www.ydgroup.com/wp-content/uploads/2024/03/3.-CSR.pdf">CSR
+                                Policy</a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="https://www.ydgroup.com/contact-us/">Contact Us</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-3 footer-links footer-right" style="padding-left: 70px">
+                    <h4>Get In Touch</h4>
+                    <ul>
+                        <li><a href="#">147-148, Sector - 58</a></li>
+                        <li><a href="#">Faridabad 121004</a></li>
+                        <li><a href="#">Haryana, India</a></li>
+                        <li><a href="tel:-+91 129 429 5200">+91 129 429 5200</a></li>
+                        <li><a href="mailto:sales@ydgroup.com">sales@ydgroup.com</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="container copyright text-center">
+            <p>
+                © <span>Copyright</span>
+                <strong class="px-1 sitename">YOGIJI DIGI</strong>
+                <span>All Rights Reserved</span>
+            </p>
+        </div>
+    </footer>
+
+
+    <script src="assets/js/config.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="assets/vendor/aos/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/attendance.js"></script>
+    <script>
+        // --- Standalone Configuration & Shared Logic ---
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = "login.html";
+        }
+
+        function handleUnauthorized(message) {
+            console.warn("Unauthorized: " + message);
+            logout();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const userStr = localStorage.getItem("user");
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    if (user && user.name) {
+                        const nameEl = document.getElementById("engineerNameDisplay");
+                        if (nameEl) nameEl.textContent = user.name;
+                    }
+                } catch (e) { }
+            }
+        });
+    </script>
+
+
+
+    <script>
         let database = [];
         let rawData = [];
         const loader = document.getElementById("loader");
@@ -442,7 +1755,12 @@
                 // ACTUALS: Fetch from Excel backend API
                 // -------------------------------------------------------------
                 else if (state.context.startsWith("actuals")) {
-                    let apiUrl = `${API_URL}/excel/actuals/dashboard?_t=${Date.now()}`;
+                    // Smart switching: Use SAP on live server, use Excel (dashboard) when testing locally
+                    let endpointPath = "/excel/actuals/sap"; 
+                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                        endpointPath = "/excel/actuals/dashboard";
+                    }
+                    let apiUrl = `${API_URL}${endpointPath}?_t=${Date.now()}`;
 
                     const res = await fetch(apiUrl, {
                         headers: {
@@ -652,6 +1970,10 @@
                 const revBtnText = document.getElementById("revenue-button-text");
                 const lastYear = state.lastRevenueYear || "actuals-2627";
                 if (revBtnText) revBtnText.innerText = lastYear === "actuals-2526" ? "REVENUE (2025-26)" : "REVENUE (2026-27)";
+
+                // Show quick filter buttons in forecast mode
+                const qfDiv = document.getElementById("tableQuickFilters");
+                if (qfDiv) qfDiv.style.display = "flex";
             } else {
                 if (document.getElementById('pmConfigBtn')) document.getElementById('pmConfigBtn').style.display = 'flex';
                 statusContainer.style.display = "none";
@@ -684,8 +2006,17 @@
                     }
                 }
 
-                state.filters.status = null;
-                document.getElementById("filter-status").value = "all";
+                state.filters.status = [];
+                const statusBtnText = document.getElementById("statusBtnText");
+                if (statusBtnText) {
+                    statusBtnText.innerText = "All Statuses";
+                }
+
+                // Hide quick filter buttons in revenue mode and reset active state
+                activeQuickFilter = null;
+                if (typeof syncQuickFilterButtons === 'function') syncQuickFilterButtons();
+                const qfDiv = document.getElementById("tableQuickFilters");
+                if (qfDiv) qfDiv.style.display = "none";
             }
 
             // --- GRID LAYOUT ---
@@ -880,7 +2211,80 @@
             updateDashboard();
         }
 
+        // Quick-filter state: which button is currently active
+        let activeQuickFilter = null;
+
+        function applyTableQuickFilter(filterKey) {
+            // Toggle off if same button clicked again
+            if (activeQuickFilter === filterKey) {
+                activeQuickFilter = null;
+                state.filters.status = [];
+            } else {
+                activeQuickFilter = filterKey;
+                switch (filterKey) {
+                    case 'bought-out':
+                        state.filters.status = ['Bought Out'];
+                        break;
+                    case 'in-house':
+                        state.filters.status = ['In House'];
+                        break;
+                    case 'dispatched':
+                        state.filters.status = ['Dispatched'];
+                        break;
+                    case 'not-dispatched':
+                        state.filters.status = ['Not Dispatched'];
+                        break;
+                    case 'bo-disp':
+                        state.filters.status = ['Bought Out', 'Dispatched'];
+                        break;
+                    default:
+                        state.filters.status = [];
+                }
+            }
+            // Also sync the dropdown checkboxes
+            document.querySelectorAll('#statusDropdownList input').forEach(cb => {
+                cb.checked = state.filters.status.includes(cb.dataset.value || cb.value);
+            });
+            updateStatusBtnText();
+            syncQuickFilterButtons();
+            updateDashboard();
+        }
+
+        function syncQuickFilterButtons() {
+            const colorMap = {
+                'qf-bought-out':    { active: 'border-blue-500 bg-blue-50 text-blue-700',   inactive: 'border-gray-300 text-gray-500 bg-white' },
+                'qf-in-house':      { active: 'border-orange-500 bg-orange-50 text-orange-700', inactive: 'border-gray-300 text-gray-500 bg-white' },
+                'qf-dispatched':    { active: 'border-green-500 bg-green-50 text-green-700',  inactive: 'border-gray-300 text-gray-500 bg-white' },
+                'qf-not-dispatched':{ active: 'border-gray-500 bg-gray-100 text-gray-700',    inactive: 'border-gray-300 text-gray-500 bg-white' },
+                'qf-bo-disp':       { active: 'border-blue-500 bg-blue-50 text-blue-700',     inactive: 'border-gray-300 text-gray-500 bg-white' },
+            };
+            const keyToId = {
+                'bought-out': 'qf-bought-out',
+                'in-house': 'qf-in-house',
+                'dispatched': 'qf-dispatched',
+                'not-dispatched': 'qf-not-dispatched',
+                'bo-disp': 'qf-bo-disp',
+            };
+            Object.entries(colorMap).forEach(([id, cls]) => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                const isActive = activeQuickFilter && keyToId[activeQuickFilter] === id;
+                // Remove all possible classes first
+                btn.className = btn.className
+                    .replace(/border-\w+-\d+/g, '')
+                    .replace(/bg-\w+-\d+/g, '')
+                    .replace(/text-\w+-\d+/g, '')
+                    .replace(/bg-white/g, '')
+                    .trim();
+                const toAdd = isActive ? cls.active : cls.inactive;
+                toAdd.split(' ').forEach(c => btn.classList.add(c));
+                if (!isActive) btn.classList.add('bg-white');
+            });
+        }
+
         function resetAllFilters() {
+            activeQuickFilter = null;
+            syncQuickFilterButtons();
             state.filters = { month: [], status: [] };
             state.selection = { pm: null, product: null, month: null };
             state.searchQuery = "";
@@ -1298,6 +2702,33 @@
 
             if (data.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">No projects match filters</td></tr>`;
+                
+                // Clear KPIs
+                const kpiRevEl = document.getElementById("kpi-revenue");
+                const kpiAsmEl = document.getElementById("kpi-assemblies");
+                const kpiAvgEl = document.getElementById("kpi-avg");
+                const kpiProjEl = document.getElementById("kpi-projects");
+                if (kpiRevEl) kpiRevEl.innerText = "₹ 0.00 Cr";
+                if (kpiAsmEl) kpiAsmEl.innerText = "0";
+                if (kpiAvgEl) kpiAvgEl.innerText = "₹ 0.00 Cr";
+                if (kpiProjEl) kpiProjEl.innerText = "0";
+
+                // Clear Charts
+                if (charts.bar) {
+                    charts.bar.data.labels = [];
+                    charts.bar.data.datasets = [{ data: [] }];
+                    charts.bar.update();
+                }
+                if (charts.pie) {
+                    charts.pie.data.labels = [];
+                    charts.pie.data.datasets = [{ data: [] }];
+                    charts.pie.update();
+                }
+                if (charts.line) {
+                    charts.line.data.labels = [];
+                    charts.line.data.datasets = [{ data: [] }];
+                    charts.line.update();
+                }
                 return;
             }
 
@@ -1422,32 +2853,39 @@
                         .map((i) => {
                             let bgStyle = "";
                             let badgeClasses = "px-3 py-1 rounded-full text-xs font-bold inline-block ";
+                            const isForecast = state.context === "forecast";
 
-                            if (i.status === "Dispatched") {
-                                if (i.source === "Bought Out") {
-                                    bgStyle = "background: linear-gradient(135deg, #3b82f6 50%, #22c55e 50%); color: white;";
-                                } else if (i.source === "In House") {
-                                    bgStyle = "background: linear-gradient(135deg, #f97316 50%, #22c55e 50%); color: white;";
+                            if (isForecast) {
+                                if (i.status === "Dispatched") {
+                                    if (i.source === "Bought Out") {
+                                        bgStyle = "background: linear-gradient(135deg, #3b82f6 50%, #22c55e 50%); color: white;";
+                                    } else if (i.source === "In House") {
+                                        bgStyle = "background: linear-gradient(135deg, #f97316 50%, #22c55e 50%); color: white;";
+                                    } else {
+                                        bgStyle = "background-color: #22c55e; color: white;";
+                                    }
                                 } else {
-                                    bgStyle = "background-color: #22c55e; color: white;";
+                                    if (i.source === "Bought Out") {
+                                        bgStyle = "background-color: #3b82f6; color: white;";
+                                    } else if (i.source === "In House") {
+                                        bgStyle = "background-color: #f97316; color: white;";
+                                    } else {
+                                        bgStyle = "background-color: transparent; color: #6b7280;";
+                                    }
                                 }
                             } else {
-                                if (i.source === "Bought Out") {
-                                    bgStyle = "background-color: #3b82f6; color: white;";
-                                } else if (i.source === "In House") {
-                                    bgStyle = "background-color: #f97316; color: white;";
-                                } else {
-                                    bgStyle = "background-color: transparent; color: #6b7280;";
-                                }
+                                // Revenue tab: no source/dispatch coloring
+                                bgStyle = "background-color: #f3f4f6; color: #374151;";
                             }
 
                             const statusBadge = `<span class="${badgeClasses}" style="${bgStyle}">${i.month} ${i.year}</span>`;
 
                             return `<div class="row d-flex flex justify-between items-center py-2 border-b border-gray-200 last:border-0 text-sm hover:bg-white transition-colors">
-<span class="col-4 text-gray-600 pl-4 border-l-2 ${i.status === "Dispatched"
-                                    ? "border-green-500"
-                                    : "border-red-300"
-                                }">
+<span class="col-4 text-gray-600 pl-4 border-l-2 ${
+                                isForecast
+                                    ? (i.status === "Dispatched" ? "border-green-500" : "border-red-300")
+                                    : "border-gray-300"
+                            }">
 
                 ${i.assembly || "–"}
 </span>
@@ -1731,6 +3169,9 @@
                 }
                 state.filters.status.push(status);
             }
+            // Deactivate quick filter buttons since user changed via dropdown
+            activeQuickFilter = null;
+            syncQuickFilterButtons();
             updateStatusBtnText();
             updateDashboard();
         }
@@ -1973,4 +3414,409 @@
                 hour12: true,
             });
         }
-    
+    </script>
+    <!-- PM Configuration Modal -->
+    <div id="pmConfigModal"
+        class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[9999] hidden items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-users-gear text-yogi-red"></i> Project Manager Configuration
+                </h3>
+                <button onclick="closePmConfigModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 bg-gray-50 flex-1 flex flex-col min-h-0">
+                <div class="mb-4 flex-shrink-0">
+                    <input type="text" id="pmConfigSearch"
+                        placeholder="Search by SAP Code, Project Name, or WBS Element..."
+                        class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-yogi-red focus:border-yogi-red shadow-sm"
+                        onkeyup="renderPmConfigTable()">
+                </div>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-y-auto flex-1 relative">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                        <thead
+                            class="bg-gray-100/90 text-gray-500 uppercase text-[10px] font-bold tracking-wider sticky top-0 z-10 backdrop-blur-sm shadow-sm">
+                            <tr>
+                                <th class="px-4 py-3 border-b border-gray-200 w-1/6 cursor-pointer select-none hover:bg-gray-200 transition-colors"
+                                    onclick="sortPmConfig('code')">
+                                    <i id="globalToggleIcon"
+                                        class="fa-solid fa-plus mr-2 text-gray-400 text-xs cursor-pointer hover:text-yogi-red transition-colors text-center w-3"
+                                        onclick="toggleAllWbsRows(event)"></i>
+                                    Project
+                                    <span id="pmSortIcon-code" class="ml-1 text-xs"></span>
+                                </th>
+                                <th class="px-4 py-3 border-b border-gray-200 w-1/4">SAP Code / WBS</th>
+                                <th class="px-4 py-3 border-b border-gray-200 w-1/3 cursor-pointer select-none hover:bg-gray-200 transition-colors"
+                                    onclick="sortPmConfig('name')">
+                                    Project Name
+                                    <span id="pmSortIcon-name" class="ml-1 text-xs"></span>
+                                </th>
+                                <th class="px-4 py-3 border-b border-gray-200 w-1/4 cursor-pointer select-none hover:bg-gray-200 transition-colors"
+                                    onclick="sortPmConfig('manager')">
+                                    Project Manager
+                                    <span id="pmSortIcon-manager" class="ml-1 text-xs"></span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="pmConfigTableBody" class="text-gray-700 divide-y divide-gray-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-100 bg-white flex justify-end gap-3">
+                <button onclick="closePmConfigModal()"
+                    class="px-5 py-2 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
+                <button onclick="savePmConfig()"
+                    class="px-5 py-2 text-sm font-semibold text-white bg-yogi-red hover:bg-red-800 shadow-md hover:shadow-lg rounded-lg transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Configuration
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        async function fetchDynamicPMMappingFromMongoDB() {
+            return new Promise((resolve) => {
+                try {
+                    const stored = localStorage.getItem('dynamicPMMapping');
+                    resolve(stored ? JSON.parse(stored) : {});
+                } catch (e) {
+                    resolve({});
+                }
+            });
+        }
+
+        async function saveDynamicPMMappingToMongoDB(config) {
+            return new Promise((resolve) => {
+                localStorage.setItem('dynamicPMMapping', JSON.stringify(config));
+                resolve(true);
+            });
+        }
+
+        async function fetchDynamicProjectNameMapping() {
+            return new Promise((resolve) => {
+                try {
+                    const stored = localStorage.getItem('dynamicProjectNameMapping');
+                    resolve(stored ? JSON.parse(stored) : {});
+                } catch (e) {
+                    resolve({});
+                }
+            });
+        }
+
+        async function saveDynamicProjectNameMapping(config) {
+            return new Promise((resolve) => {
+                localStorage.setItem('dynamicProjectNameMapping', JSON.stringify(config));
+                resolve(true);
+            });
+        }
+
+        async function loadDynamicMappings() {
+            try {
+                state.dynamicPMMapping = await fetchDynamicPMMappingFromMongoDB();
+                state.dynamicProjectNameMapping = await fetchDynamicProjectNameMapping();
+            } catch (e) {
+                console.error("Failed to parse dynamic mappings", e);
+            }
+        }
+
+        function openPmConfigModal() {
+            document.getElementById('pmConfigModal').classList.remove('hidden');
+            document.getElementById('pmConfigModal').classList.add('flex');
+            document.getElementById('pmConfigSearch').value = '';
+            renderPmConfigTable();
+        }
+
+        function closePmConfigModal() {
+            document.getElementById('pmConfigModal').classList.add('hidden');
+            document.getElementById('pmConfigModal').classList.remove('flex');
+        }
+
+        let pmConfigSortCol = 'code';
+        let pmConfigSortAsc = true;
+        let isGlobalWbsExpanded = false;
+
+        function sortPmConfig(col) {
+            if (pmConfigSortCol === col) {
+                pmConfigSortAsc = !pmConfigSortAsc;
+            } else {
+                pmConfigSortCol = col;
+                pmConfigSortAsc = true;
+            }
+            renderPmConfigTable();
+        }
+
+        function toggleAllWbsRows(e) {
+            e.stopPropagation();
+            isGlobalWbsExpanded = !isGlobalWbsExpanded;
+            const globalIcon = document.getElementById('globalToggleIcon');
+            if (globalIcon) {
+                if (isGlobalWbsExpanded) {
+                    globalIcon.classList.remove('fa-plus');
+                    globalIcon.classList.add('fa-minus');
+                } else {
+                    globalIcon.classList.remove('fa-minus');
+                    globalIcon.classList.add('fa-plus');
+                }
+            }
+            renderPmConfigTable();
+        }
+
+        function renderPmConfigTable() {
+            const tbody = document.getElementById('pmConfigTableBody');
+            const searchVal = document.getElementById('pmConfigSearch').value.toLowerCase();
+
+            ['code', 'name', 'manager'].forEach(col => {
+                const icon = document.getElementById(`pmSortIcon-${col}`);
+                if (icon) {
+                    if (pmConfigSortCol === col) {
+                        icon.innerHTML = pmConfigSortAsc ? '<i class="fa-solid fa-arrow-up"></i>' : '<i class="fa-solid fa-arrow-down"></i>';
+                        icon.parentElement.classList.add('text-gray-800');
+                        icon.parentElement.classList.remove('text-gray-500');
+                    } else {
+                        icon.innerHTML = '<i class="fa-solid fa-sort text-gray-300"></i>';
+                        icon.parentElement.classList.add('text-gray-500');
+                        icon.parentElement.classList.remove('text-gray-800');
+                    }
+                }
+            });
+
+            const projectWBSMap = {};
+
+            rawData.forEach(r => {
+                const code = String(r.project).trim();
+                if (!code || code === "null" || code === "undefined" || code.startsWith("26E") || code.startsWith("25E") || code.startsWith("26M")) return;
+
+                if (!projectWBSMap[code]) projectWBSMap[code] = new Set();
+
+                const wbs = String(r.WBSElementExternalID || r.wbs || r.WBS || "").trim();
+                if (wbs && wbs !== "null" && wbs !== "undefined") {
+                    projectWBSMap[code].add(wbs);
+                }
+            });
+
+            Object.keys(PROJECT_MAPPING).forEach(code => {
+                if (!projectWBSMap[code]) projectWBSMap[code] = new Set();
+
+                // Fallback: If a project exists but has NO WBS elements from the data yet,
+                // we add its project code as the default WBS so it can still be expanded and configured.
+                if (projectWBSMap[code].size === 0) {
+                    projectWBSMap[code].add(code);
+                }
+            });
+
+            let uniqueSapCodes = Object.keys(projectWBSMap);
+
+            uniqueSapCodes.sort((a, b) => {
+                let valA, valB;
+                if (pmConfigSortCol === 'code') {
+                    valA = a;
+                    valB = b;
+                } else if (pmConfigSortCol === 'name') {
+                    valA = getProjectName(a) || '';
+                    valB = getProjectName(b) || '';
+                } else if (pmConfigSortCol === 'manager') {
+                    valA = (state.dynamicPMMapping && state.dynamicPMMapping[a] !== undefined) ? state.dynamicPMMapping[a] : (PM_MAPPING[a] || "");
+                    valB = (state.dynamicPMMapping && state.dynamicPMMapping[b] !== undefined) ? state.dynamicPMMapping[b] : (PM_MAPPING[b] || "");
+                }
+                if (valA < valB) return pmConfigSortAsc ? -1 : 1;
+                if (valA > valB) return pmConfigSortAsc ? 1 : -1;
+                return 0;
+            });
+
+            let html = '';
+            uniqueSapCodes.forEach(code => {
+                const projName = getProjectName(code);
+                const wbsList = [...projectWBSMap[code]].sort();
+
+                if (searchVal && !code.toLowerCase().includes(searchVal) && !projName.toLowerCase().includes(searchVal)) {
+                    const wbsMatch = wbsList.some(w => w.toLowerCase().includes(searchVal));
+                    if (!wbsMatch) return;
+                }
+
+                const currentPM = (state.dynamicPMMapping && state.dynamicPMMapping[code] !== undefined)
+                    ? state.dynamicPMMapping[code]
+                    : (PM_MAPPING[code] || "");
+
+                const startExpanded = searchVal || isGlobalWbsExpanded ? true : false;
+                const hiddenClass = startExpanded ? "" : "hidden";
+                const iconClass = startExpanded ? "fa-minus" : "fa-plus";
+                const wbsLabel = wbsList.length <= 1 ? "" : "All WBS";
+
+                const ALLOWED_PMS = ["ADITYA SAINI", "ADITYA SHARMA", "SACHIN", "OM DEV", "SATYENDRA", "SHASHIKANT", "KUNAL", "TRIPURARI KUMAR", "SAURABH", "MAYANK"];
+
+                let pmOptionsHtml = `<option value="">Select PM...</option>`;
+                let foundCurrent = false;
+                ALLOWED_PMS.forEach(pm => {
+                    if (currentPM === pm) foundCurrent = true;
+                    pmOptionsHtml += `<option value="${pm}" ${currentPM === pm ? "selected" : ""}>${pm}</option>`;
+                });
+                if (currentPM && !foundCurrent) {
+                    pmOptionsHtml += `<option value="${currentPM}" selected>${currentPM}</option>`;
+                }
+
+                html += `
+                    <tr class="hover:bg-gray-50/50 transition-colors group bg-gray-50/30 cursor-pointer" onclick="toggleWbsRows('${code}')">
+                        <td class="px-4 py-3 font-semibold text-gray-900 border-l-4 border-yogi-red select-none">
+                            <i id="icon-${code}" class="fa-solid ${iconClass} mr-2 text-gray-400 text-xs transition-transform w-3 text-center"></i>
+                            ${code}
+                        </td>
+                        <td class="px-4 py-3 text-gray-400 italic text-xs select-none">${wbsLabel}</td>
+                        <td class="px-4 py-3 font-medium text-gray-800 truncate max-w-[200px]" onclick="event.stopPropagation()">
+                            <input type="text" class="project-name-input w-full px-3 py-1.5 text-sm border border-transparent hover:border-gray-300 focus:border-gray-300 rounded focus:ring-1 focus:ring-yogi-red bg-transparent focus:bg-white shadow-none focus:shadow-inner font-medium text-gray-800 transition-all truncate" data-sap-code="${code}" value="${projName}" placeholder="Enter Project Name...">
+                        </td>
+                        <td class="px-4 py-3" onclick="event.stopPropagation()">
+                            <select class="pm-config-input w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-yogi-red focus:border-yogi-red bg-white shadow-inner font-semibold cursor-pointer" data-sap-code="${code}">
+                                ${pmOptionsHtml}
+                            </select>
+                        </td>
+                    </tr>
+                `;
+
+                wbsList.forEach(wbs => {
+                    if (searchVal && !wbs.toLowerCase().includes(searchVal) && !code.toLowerCase().includes(searchVal) && !projName.toLowerCase().includes(searchVal)) {
+                        return;
+                    }
+                    const overrideKey = `${code}_WBS_${wbs}`;
+                    const wbsPM = (state.dynamicPMMapping && state.dynamicPMMapping[overrideKey] !== undefined)
+                        ? state.dynamicPMMapping[overrideKey]
+                        : "";
+
+                    let wbsPmOptionsHtml = `<option value="">Inherit / None</option>`;
+                    let foundWbsCurrent = false;
+                    ALLOWED_PMS.forEach(pm => {
+                        if (wbsPM === pm) foundWbsCurrent = true;
+                        wbsPmOptionsHtml += `<option value="${pm}" ${wbsPM === pm ? "selected" : ""}>${pm}</option>`;
+                    });
+                    if (wbsPM && !foundWbsCurrent) {
+                        wbsPmOptionsHtml += `<option value="${wbsPM}" selected>${wbsPM}</option>`;
+                    }
+
+                    html += `
+                        <tr class="child-row-${code} hover:bg-gray-50/50 transition-colors group text-xs ${hiddenClass}">
+                            <td class="px-4 py-2 border-l border-gray-200"></td>
+                            <td class="px-4 py-2 text-gray-600 pl-4 font-mono select-none">
+                                <i class="fa-solid fa-level-up fa-rotate-90 text-gray-300 mr-2"></i> ${wbs}
+                            </td>
+                            <td class="px-4 py-2 text-gray-400 italic select-none">WBS Element</td>
+                            <td class="px-4 py-2 pl-8">
+                                <select class="pm-config-input w-[90%] float-right px-2 py-1 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-yogi-red focus:border-yogi-red bg-gray-50 hover:bg-white shadow-inner cursor-pointer" data-sap-code="${overrideKey}">
+                                    ${wbsPmOptionsHtml}
+                                </select>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+
+            if (!html) {
+                html = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400 italic">No matching projects found</td></tr>`;
+            }
+
+            tbody.innerHTML = html;
+        }
+
+        function toggleWbsRows(code) {
+            const rows = document.querySelectorAll(`.child-row-${code}`);
+            const icon = document.getElementById(`icon-${code}`);
+            let isHidden = true;
+
+            rows.forEach(row => {
+                if (row.classList.contains('hidden')) {
+                    row.classList.remove('hidden');
+                    isHidden = false;
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+
+            if (icon) {
+                if (isHidden) {
+                    icon.classList.remove('fa-minus');
+                    icon.classList.add('fa-plus');
+                } else {
+                    icon.classList.remove('fa-plus');
+                    icon.classList.add('fa-minus');
+                }
+            }
+        }
+
+        async function savePmConfig() {
+            const pmInputs = document.querySelectorAll('.pm-config-input');
+            const newPmMapping = { ...state.dynamicPMMapping };
+            let hasChanges = false;
+
+            pmInputs.forEach(input => {
+                const code = input.getAttribute('data-sap-code');
+                const val = input.value.trim();
+                let staticVal = "";
+
+                if (!code.includes("_WBS_")) {
+                    staticVal = PM_MAPPING[code] || "";
+                }
+
+                if (val !== staticVal && val !== "") {
+                    if (newPmMapping[code] !== val) {
+                        newPmMapping[code] = val;
+                        hasChanges = true;
+                    }
+                } else {
+                    if (newPmMapping[code] !== undefined) {
+                        delete newPmMapping[code];
+                        hasChanges = true;
+                    }
+                }
+            });
+
+            const nameInputs = document.querySelectorAll('.project-name-input');
+            const newNameMapping = { ...state.dynamicProjectNameMapping };
+
+            nameInputs.forEach(input => {
+                const code = input.getAttribute('data-sap-code');
+                const val = input.value.trim();
+                let staticVal = PROJECT_MAPPING[code] || "Miscellaneous";
+
+                if (val !== staticVal && val !== "") {
+                    if (newNameMapping[code] !== val) {
+                        newNameMapping[code] = val;
+                        hasChanges = true;
+                    }
+                } else {
+                    if (newNameMapping[code] !== undefined) {
+                        delete newNameMapping[code];
+                        hasChanges = true;
+                    }
+                }
+            });
+
+            if (hasChanges) {
+                state.dynamicPMMapping = newPmMapping;
+                state.dynamicProjectNameMapping = newNameMapping;
+                await saveDynamicPMMappingToMongoDB(newPmMapping);
+                await saveDynamicProjectNameMapping(newNameMapping);
+
+                const ctx = state.context;
+                state.context = "rebuilding"; // Force full rebuild
+                switchDataContext(ctx);
+
+                const btn = document.querySelector('button[onclick="savePmConfig()"]');
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = `<i class="fa-solid fa-check"></i> Saved!`;
+                btn.classList.replace('bg-yogi-red', 'bg-green-600');
+                btn.classList.replace('hover:bg-red-800', 'hover:bg-green-700');
+
+                setTimeout(() => {
+                    btn.innerHTML = origHtml;
+                    btn.classList.replace('bg-green-600', 'bg-yogi-red');
+                    btn.classList.replace('hover:bg-green-700', 'hover:bg-red-800');
+                    closePmConfigModal();
+                }, 1000);
+            } else {
+                closePmConfigModal();
+            }
+        }
+    </script>
+</body>
+
+</html>

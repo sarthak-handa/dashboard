@@ -1,0 +1,542 @@
+const express = require("express");
+const router = express.Router();
+const Excel = require("../models/ExcelModel");
+const User = require("../models/User");
+const { readProjectsSheet } = require("../../utils/graph.js");
+const { readActualSheet } = require("../../utils/graph.js");
+const { verifyToken } = require("../middleware/auth");
+const axios = require("axios"); // Import Axios for Graph API calls
+
+// --- CONFIGURATION: GRAPH API CREDENTIALS ---
+// Ideally, put these in your .env file
+const TENANT_ID =
+  process.env.TENANT_ID || "a0e08c58-7003-49f2-a898-bfb4a1b05815";
+const CLIENT_ID =
+  process.env.CLIENT_ID || "674b7459-54de-4d1d-b13a-0070c7b57d58";
+const CLIENT_SECRET =
+  process.env.CLIENT_SECRET || "";
+
+// process.env.CLIENT_SECRET || "";
+
+const DRIVE_ID =
+  "b!-1MZkE8WdUCwHHHaP1rzH_PqGBIe57tJvXHEOqKXXGHlO_rJZfmnQLPiI9rdBJ_7";
+const FORECAST_FILE_ID = "01YUMYDKJKYCODJHCFLVEJRHTMXUVRRHRO";
+const ACTUALS_FILE_ID = "01YUMYDKJ4P2DAPAXKUNCJH5CCCZ3RZ35F";
+
+// --- HELPER: GET ACCESS TOKEN ---
+async function getGraphAccessToken() {
+  const params = new URLSearchParams();
+  params.append("client_id", CLIENT_ID);
+  params.append("client_secret", CLIENT_SECRET);
+  params.append("scope", "https://graph.microsoft.com/.default");
+  params.append("grant_type", "client_credentials");
+
+  try {
+    const response = await axios.post(
+      `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/token`,
+      params,
+    );
+    return response.data.access_token;
+  } catch (error) {
+    console.error(
+      "Error fetching Graph Token:",
+      error.response?.data || error.message,
+    );
+    return null;
+  }
+}
+
+// --- HELPER: GET FILE METADATA (TIMESTAMP) ---
+async function getFileMetadata(fileId) {
+  try {
+    const token = await getGraphAccessToken();
+    if (!token) return null;
+
+    const response = await axios.get(
+      `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${fileId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+
+    return response.data.lastModifiedDateTime;
+  } catch (error) {
+    console.error(
+      `Error fetching metadata for file ${fileId}:`,
+      error.response?.data || error.message,
+    );
+    return null;
+  }
+}
+
+// --- EXISTING HELPER FUNCTIONS ---
+
+function mapProjectsSheet(rows) {
+  // rows[0] is header
+  return rows
+    .slice(1)
+    .filter((r) => r[0]) // PROJECT not empty
+    .map((r) => {
+      return {
+        project: String(r[0]).trim(), // Column1
+        pm: String(r[2] || "").trim(), // Column3
+        assembly: String(r[3] || "").trim(), // Column4
+        billing: Number(String(r[7] || 0).replace(/[^0-9.-]/g, "")) || 0, // Column7
+        status: String(r[7] || "")
+          .toLowerCase()
+          .includes("disp")
+          ? "Dispatched"
+          : "Not Dispatched",
+        month: String(r[8] || "").trim(), // Column8 / Dispatch Month
+      };
+    });
+}
+
+function normalizeStatus(val) {
+  if (!val) return "Not Dispatched";
+  const v = String(val).trim().toLowerCase();
+  if (v === "disp." || v === "disp" || v === "dispatched") return "Dispatched";
+  if (v.includes("hold")) return "Hold";
+  return "Not Dispatched";
+}
+
+function extractLine(project) {
+  if (!project) return "";
+  const parts = String(project).split("-");
+  return parts[parts.length - 1].trim();
+}
+
+// Fixed month names. Do NOT use toLocaleString("en-US", { month: "short" })
+// here: on newer Node/ICU versions that returns "Sept" for September, and the
+// dashboard's month sorting and month filter expect "Sep".
+const MONTH_SHORT = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+function shortMonth(d) {
+  return d instanceof Date && !isNaN(d) ? MONTH_SHORT[d.getMonth()] : "";
+}
+
+function mapCategory(line) {
+  const l = line.toUpperCase();
+  if (
+    [
+      "6HI CRM",
+      "4HI CRM",
+      "CRM",
+      "6HI",
+      "6 STAND TANDEM MILL",
+      "5 STAND TANDEM MILL",
+    ].includes(l)
+  )
+    return "CRM";
+
+  if (["CGL", "GI/GL LINE"].includes(l)) return "CGL";
+  if (["SPARE", "SPARES", "POR SPARE", "JSW BAWAL"].includes(l)) return "SPARE";
+  if (l === "ARP") return "ARP";
+  if (l === "CCL") return "CCL";
+  if (["REVAMP", "TPI REVAMP"].includes(l)) return "REVAMP";
+  if (["TRIMMING", "TRIMMER"].includes(l)) return "TRIMMING";
+  if (["PICKLING", "5 TANK PICKLING"].includes(l)) return "PICKLING";
+  if (["4HI SPM", "SPM"].includes(l)) return "SPM";
+  if (l === "APL") return "APL";
+
+  return "OTHER";
+}
+
+let fiscalYearStart;
+let fiscalYearEnd;
+
+function isInCurrentFiscalWindow(dispatchDate) {
+  if (!(dispatchDate instanceof Date) || isNaN(dispatchDate)) return false;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const startOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+
+  if (dispatchDate < startOfCurrentMonth) return false;
+
+  if (currentMonth <= 2) {
+    fiscalYearStart = currentYear - 1;
+    fiscalYearEnd = currentYear;
+  } else {
+    fiscalYearStart = currentYear;
+    fiscalYearEnd = currentYear + 1;
+  }
+  const fiscalEndDate = new Date(fiscalYearStart + 1, 2, 31, 23, 59, 59);
+  return dispatchDate >= startOfCurrentMonth && dispatchDate <= fiscalEndDate;
+}
+
+/* ------------------------------------
+   SAVE EXCEL (FIRST TIME)
+------------------------------------ */
+router.post("/save", verifyToken, async (req, res) => {
+  try {
+    const { sheetName, data } = req.body;
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ message: "Invalid excel data" });
+    }
+    const excel = await Excel.create({
+      sheetName,
+      data,
+      createdBy: req.user?._id,
+    });
+    res.json({
+      success: true,
+      message: "Excel saved successfully",
+      excelId: excel._id,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ------------------------------------
+   UPDATE EXCEL
+------------------------------------ */
+router.put("/update/:id", verifyToken, async (req, res) => {
+  try {
+    const { data } = req.body;
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ message: "Invalid excel data" });
+    }
+    const updated = await Excel.findByIdAndUpdate(
+      req.params.id,
+      {
+        data,
+        updatedAt: new Date(),
+      },
+      { new: true },
+    );
+    if (!updated) {
+      return res.status(404).json({ message: "Excel record not found" });
+    }
+    res.json({
+      success: true,
+      message: "Excel updated successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ------------------------------------
+   GET LATEST EXCEL (DB-FIRST LOGIC)
+------------------------------------ */
+router.get("/latestExcel", verifyToken, async (req, res) => {
+  try {
+    const excel = await Excel.findOne().sort({ updatedAt: -1 });
+    req.user = await User.findById(req.user._id)
+      .select("-password")
+      .populate("branches");
+
+    const EXCEL_BRANCH = "excel";
+    const hasExcelBranch = req.user.branches?.some(
+      (b) => b.name?.toLowerCase() === EXCEL_BRANCH,
+    );
+
+    if (!hasExcelBranch) {
+      return res.status(403).json({
+        message: "Access denied: You don't have access to view the excel",
+      });
+    }
+    res.json(excel || null);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/latest", verifyToken, async (req, res) => {
+  try {
+    const excel = await Excel.findOne().sort({ updatedAt: -1 });
+    res.json(excel || null);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ------------------------------------
+   OPTIONAL: DELETE
+------------------------------------ */
+router.delete("/:id", verifyToken, async (req, res) => {
+  try {
+    await Excel.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ------------------------------------
+   READ PROJECTS SHEET DIRECTLY FROM SHAREPOINT
+------------------------------------ */
+router.get("/sharepoint/projects", async (req, res) => {
+  try {
+    console.log("here");
+    const rows = await readProjectsSheet();
+    res.json({
+      source: "SharePoint Excel",
+      sheet: "PROJECTS",
+      rowCount: rows.length,
+      data: rows,
+    });
+  } catch (err) {
+    console.error("SharePoint Excel error:", err.message);
+    res.status(500).json({
+      message: "Failed to read SharePoint Excel",
+      error: err.message,
+    });
+  }
+});
+
+/* ------------------------------------
+   CLEAN PROJECTS DATA FOR DASHBOARD
+------------------------------------ */
+router.get("/forecast/projects", async (req, res) => {
+  try {
+    const rows = await readProjectsSheet();
+    const data = mapProjectsSheet(rows);
+    res.json({
+      source: "SharePoint Excel",
+      sheet: "PROJECTS",
+      count: data.length,
+      data,
+    });
+  } catch (err) {
+    console.error("Forecast projects error:", err.message);
+    res.status(500).json({
+      message: "Failed to prepare forecast data",
+      error: err.message,
+    });
+  }
+});
+
+/* ------------------------------------
+   FINAL DASHBOARD DATA (POWER BI EQUIVALENT)
+------------------------------------ */
+router.get("/forecast/dashboard", async (req, res) => {
+  try {
+    // 1. Fetch Data and Metadata in Parallel for speed
+    const [rows, lastUpdated] = await Promise.all([
+      readProjectsSheet(),
+      getFileMetadata(FORECAST_FILE_ID),
+    ]);
+
+    const headerSkipped = rows.slice(1);
+    const data = headerSkipped
+      .filter((r) => r[0] && r[0] !== "PROJECT")
+      .map((r) => {
+        const dispatchDate = r[26] ? new Date(r[26]) : null;
+        // const dispatchDate = r[18] ? new Date(r[18]) : null;
+        const line = extractLine(r[0]);
+        return {
+          project: String(r[0]).trim(),
+          // Column B holds BOI / UNIT-x / ELECTRICAL etc. The dashboard turns
+          // this into the "Bought Out" / "In House" quick filters and the
+          // source colour coding, so it has to be passed through.
+          columnB: String(r[1] || "").trim(),
+          pm: String(r[2] || "").trim(),
+          assembly: String(r[3] || "").trim(),
+          billing: Number(String(r[6] || 0).replace(/[^0-9.-]/g, "")) || 0,
+          status: normalizeStatus(r[7]),
+          dispatchMonth: dispatchDate,
+          month: shortMonth(dispatchDate),
+          line,
+          category: mapCategory(line),
+        };
+      })
+      .filter((d) => isInCurrentFiscalWindow(d.dispatchMonth));
+
+    res.json({
+      source: "SharePoint Excel",
+      fiscalLogic: "Current month → March",
+      fiscalYear: (fiscalYearStart || "2026") + "-" + (fiscalYearEnd || "2027"),
+      lastUpdated: lastUpdated, // <--- New Field
+      count: data.length,
+      data,
+    });
+  } catch (err) {
+    console.error("Forecast dashboard error:", err.message);
+    res.status(500).json({
+      message: "Failed to build dashboard data",
+      error: err.message,
+    });
+  }
+});
+
+router.get("/actuals/dashboard", async (req, res) => {
+  try {
+    // 1. Fetch Data and Metadata in Parallel
+    const [rows, lastUpdated] = await Promise.all([
+      readActualSheet(),
+      getFileMetadata(ACTUALS_FILE_ID),
+    ]);
+
+    const headerSkipped = rows.slice(1);
+    const data = headerSkipped
+      .filter((r) => r[0] && r[0] !== "PROJECT")
+      .map((r) => {
+        const dispatchDate = r[18] ? new Date(r[18]) : null;
+        const line = r[17];
+        return {
+          project: String(r[0]).trim(),
+          pm: String(r[2] || "").trim(),
+          assembly: String(r[3] || "").trim(),
+          billing: Number(String(r[6] || 0).replace(/[^0-9.-]/g, "")) || 0,
+          status: normalizeStatus(r[7]),
+          dispatchMonth: dispatchDate,
+          month: shortMonth(dispatchDate),
+          line,
+          category: line,
+        };
+      });
+
+    // Note: The original filter for fiscal window was commented out in your code.
+    // .filter((d) => isInCurrentFiscalWindow(d.dispatchMonth));
+
+    res.json({
+      source: "SharePoint Excel",
+      fiscalLogic: "April → Previous month",
+      fiscalYear: (fiscalYearStart || "2025") + "-" + (fiscalYearEnd || "2026"),
+      lastUpdated: lastUpdated, // <--- New Field
+      count: data.length,
+      data,
+    });
+  } catch (err) {
+    console.error("Actuals dashboard error:", err.message);
+    res.status(500).json({
+      message: "Failed to build dashboard data",
+      error: err.message,
+    });
+  }
+});
+
+/* ------------------------------------
+   SAP S/4HANA OData PROXY
+   Browser cannot call SAP directly (CORS + exposed creds).
+   This server-side proxy adds Basic auth from env, reshapes the OData payload
+   into the { data: [...] } form the dashboard reads, and caches the result.
+------------------------------------ */
+// The dashboard reloads on every tab switch, and each reload used to be one
+// more SAP hit. Cache for 15 minutes. The circuit breaker exists because a
+// wrong password retried in a loop once got the SAP user locked out.
+let sapCache = { body: null, at: 0 };
+let sapBlockedUntil = 0;
+const SAP_CACHE_MS = 15 * 60 * 1000;
+const SAP_BLOCK_MS = 15 * 60 * 1000;
+
+router.get("/actuals/sap", async (req, res) => {
+  try {
+    const baseUrl = (process.env.SAP_BASE_URL || "").trim();
+    const sapUser = (process.env.SAP_USER || "").trim();
+    const sapPass = (process.env.SAP_PASS || "").trim();
+
+    if (!baseUrl || !sapUser || !sapPass) {
+      return res
+        .status(500)
+        .json({ message: "SAP credentials are not configured on the server" });
+    }
+
+    if (Date.now() < sapBlockedUntil) {
+      const minutesLeft = Math.ceil((sapBlockedUntil - Date.now()) / 60000);
+      return res.status(503).json({
+        message: `SAP calls paused for ${minutesLeft} more minute(s) after an auth failure, to avoid locking the SAP user. Check SAP_USER / SAP_PASS on the server.`,
+      });
+    }
+
+    if (sapCache.body && Date.now() - sapCache.at < SAP_CACHE_MS) {
+      return res.json(sapCache.body);
+    }
+
+    // Covers both fiscal years the dashboard offers (2025-26 and 2026-27).
+    // The frontend narrows it down to the year the user picked.
+    const entity =
+      "/sap/opu/odata/sap/YY1_GSTR1_SUMMARY_API_CDS/YY1_GSTR1_SUMMARY_API" +
+      "(p_from_dt=datetime'2025-04-01T00:00:00',p_to_dt=datetime'2027-03-31T00:00:00')/Set";
+
+    const sapResponse = await axios.get(`${baseUrl}${entity}`, {
+      params: {
+        $filter:
+          "doc_type eq 'F2' or doc_type eq 'G2' or doc_type eq 'S1' or doc_type eq 'S2'",
+        // WBSElementExternalID is required: the dashboard reads it to resolve
+        // the 4-digit project code and the project manager.
+        $select:
+          "doc_type,Project,WBSElementExternalID,ProductName,TOTAL_SALE_WITHOUT_TAX,monthno,Billing_date",
+        $format: "json",
+      },
+      auth: { username: sapUser, password: sapPass },
+      headers: { Accept: "application/json" },
+      timeout: 60000,
+    });
+
+    // SAP answers with { d: { results: [...] } }. The dashboard reads
+    // response.data, so the rows are reshaped to match the forecast route.
+    const results = sapResponse.data?.d?.results || [];
+
+    const data = results.map((r) => {
+      const d = r.Billing_date ? new Date(r.Billing_date) : null;
+      const valid = d instanceof Date && !isNaN(d);
+      return {
+        project: String(r.Project || "").trim(),
+        WBSElementExternalID: String(r.WBSElementExternalID || "").trim(),
+        pm: "", // resolved in the browser from PM_MAPPING
+        assembly: String(r.ProductName || "").trim(),
+        billing:
+          Number(
+            String(r.TOTAL_SALE_WITHOUT_TAX || 0).replace(/[^0-9.-]/g, ""),
+          ) || 0,
+        status: "Dispatched", // SAP rows are already-billed revenue
+        docType: String(r.doc_type || "").trim(),
+        // Passed through exactly as SAP sent it ("2025-10-01T00:00:00").
+        // Converting to ISO would apply the server's timezone offset and could
+        // push a 1st-of-the-month row back into the previous month.
+        dispatchMonth: valid ? r.Billing_date : null,
+        month: shortMonth(d),
+        line: "", // resolved in the browser from LINE_MAPPING
+        category: "",
+      };
+    });
+
+    const body = {
+      source: "SAP S/4HANA",
+      lastUpdated: new Date().toISOString(),
+      count: data.length,
+      data,
+    };
+
+    sapCache = { body, at: Date.now() };
+    res.json(body);
+  } catch (err) {
+    const status = err.response?.status;
+    console.error(
+      "SAP proxy error:",
+      status,
+      err.response?.data || err.message,
+    );
+
+    if (status === 401 || status === 403) {
+      sapBlockedUntil = Date.now() + SAP_BLOCK_MS;
+      console.warn(
+        `SAP auth failed (${status}). Pausing SAP calls for 15 minutes to protect the account.`,
+      );
+    }
+
+    // Prefer stale data over a blank dashboard.
+    if (sapCache.body) {
+      console.warn("Serving stale SAP cache after error.");
+      return res.json(sapCache.body);
+    }
+
+    res.status(status || 500).json({
+      message: "Failed to fetch SAP data",
+      error: err.response?.data || err.message,
+    });
+  }
+});
+
+module.exports = router;
